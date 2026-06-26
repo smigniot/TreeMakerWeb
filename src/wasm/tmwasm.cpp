@@ -22,6 +22,9 @@
 #include "tmScaleOptimizer.h"
 #include "tmEdgeOptimizer.h"
 #include "tmStrainOptimizer.h"
+#include "tmConditionNodesPaired.h"
+#include "tmConditionNodesCollinear.h"
+#include "tmConditionEdgeLengthFixed.h"
 
 using namespace std;
 
@@ -240,10 +243,42 @@ static char* serializeCPWithNodes(tmTree* t, const char* err) {
   return serializeCP(t, err, extra.str());
 }
 
-// Build a tree from authoritative data (node positions + edge topology), using
-// the C++ AddNode API so all derived structure (paths, mLeafPaths, polys) is
-// maintained natively — then optimize and build the crease pattern. This avoids
-// serializing the densely cross-linked derived structure by hand.
+// Create the conditions described in the spec (after the edges) on the built
+// tree, via the same tmTree API the desktop GUI uses. Node/edge indices are
+// 0-based spec indices. Each condition is created in a try block so a bad one
+// (e.g. referencing a non-leaf node) is skipped rather than aborting the build.
+static void applyConditions(tmTree* t, std::vector<tmNode*>& nodes,
+                            std::vector<tmEdge*>& edges, istringstream& is) {
+  size_t numConds = 0;
+  if (!(is >> numConds)) return;
+  auto node = [&](int i) -> tmNode* { return (i >= 0 && (size_t)i < nodes.size()) ? nodes[i] : nullptr; };
+  auto edge = [&](int i) -> tmEdge* { return (i >= 0 && (size_t)i < edges.size()) ? edges[i] : nullptr; };
+  auto nodeList = [](tmNode* n) { tmArray<tmNode*> a; if (n) a.push_back(n); return a; };
+
+  for (size_t i = 0; i < numConds; ++i) {
+    std::string tag;
+    if (!(is >> tag)) break;
+    try {
+      if (tag == "CNsn") { int n; is >> n; if (node(n)) { tmArray<tmNode*> a = nodeList(node(n)); t->SetNodesFixedToSymmetryLinev4(a); } }
+      else if (tag == "CNen") { int n; is >> n; if (node(n)) { tmArray<tmNode*> a = nodeList(node(n)); t->SetNodesFixedToPaperEdgev4(a); } }
+      else if (tag == "CNkn") { int n; is >> n; if (node(n)) { tmArray<tmNode*> a = nodeList(node(n)); t->SetNodesFixedToPaperCornerv4(a); } }
+      else if (tag == "CNfn") { int n, xf, yf; double xv, yv; is >> n >> xf >> yf >> xv >> yv; if (node(n)) { tmArray<tmNode*> a = nodeList(node(n)); t->SetNodesFixedToPositionv4(a, xf != 0, xv, yf != 0, yv); } }
+      else if (tag == "CNpn") { int a, b; is >> a >> b; if (node(a) && node(b)) t->GetOrMakeTwoPartCondition<tmConditionNodesPaired, tmNode>(node(a), node(b)); }
+      else if (tag == "CNcn") { int a, b, c; is >> a >> b >> c; if (node(a) && node(b) && node(c)) t->GetOrMakeThreePartCondition<tmConditionNodesCollinear, tmNode>(node(a), node(b), node(c)); }
+      else if (tag == "CNfe") { int e; is >> e; if (edge(e)) t->GetOrMakeOnePartCondition<tmConditionEdgeLengthFixed, tmEdge>(edge(e)); }
+      else if (tag == "CNes") { int a, b; is >> a >> b; if (edge(a) && edge(b)) { tmArray<tmEdge*> ea; ea.push_back(edge(a)); ea.push_back(edge(b)); t->SetEdgesSameStrain(ea); } }
+      else if (tag == "CNap") { int a, b; is >> a >> b; tmPath* p = (node(a) && node(b)) ? t->GetLeafPath(node(a), node(b)) : nullptr; if (p) { tmArray<tmPath*> pa; pa.push_back(p); t->SetPathsActivev4(pa); } }
+      else if (tag == "CNfp") { int a, b; double ang; is >> a >> b >> ang; tmPath* p = (node(a) && node(b)) ? t->GetLeafPath(node(a), node(b)) : nullptr; if (p) { tmArray<tmPath*> pa; pa.push_back(p); t->SetPathsAngleFixedv4(pa, ang); } }
+      else if (tag == "CNqp") { int a, b; size_t q; double off; is >> a >> b >> q >> off; tmPath* p = (node(a) && node(b)) ? t->GetLeafPath(node(a), node(b)) : nullptr; if (p) { tmArray<tmPath*> pa; pa.push_back(p); t->SetPathsAngleQuantv4(pa, q, off); } }
+      else { std::string rest; std::getline(is, rest); } // unknown tag: skip line
+    } catch (...) { /* skip a malformed/invalid condition */ }
+  }
+}
+
+// Build a tree from authoritative data (node positions + edge topology +
+// conditions), using the C++ AddNode/condition API so all derived structure
+// (paths, mLeafPaths, polys) is maintained natively — then optimize and build
+// the crease pattern. This avoids serializing the cross-linked derived data.
 //
 // Spec is whitespace-delimited:
 //   paperW paperH scale hasSym symX symY symAngle
@@ -251,7 +286,8 @@ static char* serializeCPWithNodes(tmTree* t, const char* err) {
 //   x y               (numNodes lines; node index = line order, 0-based)
 //   numEdges
 //   from to length strain stiffness   (numEdges lines; from/to are node indices)
-// (Conditions are not yet applied — a tracked follow-up.)
+//   numConditions
+//   <tag> <fields…>                   (per applyConditions)
 extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
   ensureInit();
   istringstream is(spec);
@@ -283,6 +319,7 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
 
   // Build the tree by BFS from node 0, adding each child via AddNode(parent).
   std::vector<tmNode*> tmNodes(numNodes, nullptr);
+  std::vector<tmEdge*> tmEdges(numEdges, nullptr); // spec edge index → tmEdge*
   if (numNodes > 0) {
     tmNode* root; tmEdge* dummy = nullptr;
     t->AddNode(nullptr, pos[0], root, dummy);
@@ -301,12 +338,14 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
         tmNode* nn; tmEdge* ne = nullptr;
         t->AddNode(tmNodes[cur], pos[other], nn, ne);
         tmNodes[other] = nn;
+        tmEdges[ei] = ne;
         if (ne) { ne->SetLength(e.len); ne->SetStrain(e.strain); ne->SetStiffness(e.stiff); }
         queue.push_back(other);
       }
     }
   }
   t->SetScale(scale);
+  applyConditions(t, tmNodes, tmEdges, is); // conditions follow edges in the spec
 
   const char* err = runOptimize(t, mode);
   if (!err) { try { t->BuildPolysAndCreasePattern(); } catch (...) { err = "build failed"; } }

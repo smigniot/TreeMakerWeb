@@ -38,4 +38,22 @@ describe('crease-pattern build (native spec builder)', () => {
     expect(folds.has(CreaseFold.Mountain)).toBe(true);
     expect(folds.has(CreaseFold.Valley)).toBe(true);
   }, 30_000);
+
+  it('applies a NodeFixed condition during the optimization', async () => {
+    const t = fourFlapStar();
+    // The first leaf is node index 1 (center is 0); pin it to mid bottom-edge.
+    const leaf = t.nodeList()[1]!;
+    t.addCondition({
+      type: 'NodeFixed', tag: 'CNfn', node: leaf.id,
+      xFixed: true, yFixed: true, xFixValue: 0.5, yFixValue: 0,
+    });
+
+    const cp = await buildTreeCreasePattern(t);
+    expect(cp.ok).toBe(true);
+    const pinned = cp.nodes?.find((n) => n.i === 1);
+    expect(pinned).toBeTruthy();
+    // The optimizer respected the fix: the node is at (0.5, 0).
+    expect(pinned!.x).toBeCloseTo(0.5, 3);
+    expect(pinned!.y).toBeCloseTo(0, 3);
+  }, 30_000);
 });

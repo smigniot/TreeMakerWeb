@@ -5,6 +5,26 @@ Newest entry first.
 
 ---
 
+## Session 6 — Conditions wired into the spec builder
+
+**State at end:** the spec builder now applies the user's conditions, so
+constrained designs (symmetry, pinning, paired/collinear nodes, edge/path
+constraints) optimize and build correctly — not just unconstrained bases.
+46 unit + 6 e2e green.
+
+- `io/spec.ts` emits a conditions section (tag + 0-based node/edge indices +
+  params) after the edges, skipping any whose referenced parts are gone.
+- `tmwasm.cpp` `applyConditions()` creates each via the same `tmTree` API the
+  desktop GUI uses (`SetNodesFixedTo…v4`, `SetPaths…v4`, `GetOrMake*PartCondition`,
+  `GetLeafPath`), each in a try block so a bad one is skipped, not fatal. Applied
+  after the topology is built and before optimization.
+- Test: a `NodeFixed` condition pinning a leaf to (0.5, 0) is respected by the
+  optimizer (the returned position matches). Task #24 done.
+
+**Next:** folded-form view; export (SVG/PDF); #20 (Web Worker); #14 (legacy v5/v3).
+
+---
+
 ## Session 5 — P3 crease-pattern generation (full pipeline working)
 
 **State at end:** the **complete TreeMaker pipeline runs in the browser** — tree →
