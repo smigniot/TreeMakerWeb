@@ -34,13 +34,17 @@ export class DesignView {
   private drag: DragState | null = null;
   private disposers: Array<() => void> = [];
 
+  /** Called once per discrete user edit (add/move/delete) — an undo boundary. */
+  onEdit?: (label: string) => void;
+
   constructor(
     private container: HTMLElement,
     private tree: Tree,
-    opts: { selection?: Selection; settings?: ViewSettings } = {},
+    opts: { selection?: Selection; settings?: ViewSettings; onEdit?: (label: string) => void } = {},
   ) {
     this.selection = opts.selection ?? new Selection();
     this.settings = opts.settings ?? defaultViewSettings();
+    if (opts.onEdit) this.onEdit = opts.onEdit;
     this.xf = new ViewTransform(tree.paper.width, tree.paper.height);
 
     this.svg = svgEl('svg', { class: 'tm-design', width: '100%', height: '100%' });
@@ -237,12 +241,14 @@ export class DesignView {
     if (this.tree.nodes.size === 0) {
       const n = this.tree.addNode(paper);
       this.selection.set({ kind: 'node', id: n.id });
+      this.onEdit?.('Add node');
       return;
     }
     const sole = this.selection.single();
     if (sole && sole.kind === 'node' && !this.tree.getNode(sole.id)?.isSub) {
       const { node } = this.tree.addNodeFrom(sole.id, paper);
       this.selection.set({ kind: 'node', id: node.id });
+      this.onEdit?.('Add node');
       return;
     }
     this.selection.clear();
@@ -263,7 +269,9 @@ export class DesignView {
       this.svg.releasePointerCapture?.(ev.pointerId);
       this.svg.removeEventListener('pointermove', onMove);
       this.svg.removeEventListener('pointerup', onUp);
+      const moved = this.drag?.moved ?? false;
       this.drag = null;
+      if (moved) this.onEdit?.('Move');
     };
     this.svg.addEventListener('pointermove', onMove);
     this.svg.addEventListener('pointerup', onUp);
@@ -300,6 +308,7 @@ export class DesignView {
             (r.kind === 'condition' && this.tree.conditions.has(r.id)) ||
             (r.kind === 'path'),
           );
+          this.onEdit?.('Delete');
         }
       }
     };

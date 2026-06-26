@@ -51,3 +51,15 @@ body { font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
 
 .tm-label { fill: #333; font-size: 11px; pointer-events: none; }
 .tm-edge-label { fill: var(--tm-edge); text-anchor: middle; }
+
+/* --- sidebar chrome --- */
+.tm-sidebar { display: flex; flex-direction: column; gap: 12px; }
+.tm-panel-title { font-weight: 600; margin: 4px 0; padding-bottom: 2px; border-bottom: 1px solid var(--tm-border); }
+.tm-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.tm-row-label { flex: 0 0 72px; color: #555; }
+.tm-input { flex: 1 1 auto; min-width: 0; font: inherit; padding: 2px 4px; }
+.tm-check { margin: 0; }
+.tm-readonly { color: #333; }
+.tm-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.tm-presets button { font: inherit; padding: 2px 6px; }
+.tm-toolbar button:disabled { opacity: 0.4; }

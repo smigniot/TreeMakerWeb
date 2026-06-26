@@ -1,58 +1,88 @@
-// TreeMakerWeb entry point. Builds the app shell and mounts the SVG design
-// surface. The full chrome (inspector, view-settings panel, menus, undo) is
-// layered on in the chrome task; this provides a usable editor: click to add
-// nodes, drag to move, Delete to remove, with a live status bar.
+// TreeMakerWeb entry point — assembles the P1 viewer/editor: SVG design surface,
+// inspector, view-settings panel, snapshot undo/redo, and file open/save.
 
 import './styles.css';
 import { Tree } from './model/tree';
 import { pt } from './model/geometry';
 import { DesignView } from './view/designView';
+import { UndoManager } from './ui/undo';
+import { Inspector } from './ui/inspector';
+import { ViewSettingsPanel } from './ui/viewSettingsPanel';
+import { openFileDialog, saveJson } from './ui/files';
 
 export interface App {
   tree: Tree;
   view: DesignView;
+  undo: UndoManager;
 }
 
 export function mount(root: HTMLElement): App {
   root.replaceChildren();
-
   const toolbar = el('div', 'tm-toolbar');
   const host = el('div', 'tm-canvas-host');
   const sidebar = el('div', 'tm-sidebar');
   const status = el('div', 'tm-statusbar');
-  sidebar.textContent = 'Inspector (coming next)';
+  const inspectorHost = el('div', 'tm-inspector');
+  const viewHost = el('div', 'tm-viewsettings');
+  sidebar.append(inspectorHost, viewHost);
   root.append(toolbar, host, sidebar, status);
 
   const tree = new Tree();
-  const view = new DesignView(host, tree);
+  const undo = new UndoManager(tree);
+  const view = new DesignView(host, tree, { onEdit: (label) => undo.record(label) });
+  new Inspector(inspectorHost, tree, view.selection, (label) => undo.record(label));
+  new ViewSettingsPanel(viewHost, view);
 
-  const newBtn = button('New', () => {
-    tree.loadState(new Tree().toState());
-    view.selection.clear();
-    view.refit();
-    view.render();
-  });
-  const sampleBtn = button('Sample tree', () => {
-    loadSample(tree);
-    view.selection.clear();
-    view.refit();
-    view.render();
-  });
-  toolbar.append(strong('TreeMakerWeb'), newBtn, sampleBtn, hint('click empty to add a node · drag to move · Delete to remove'));
+  // --- toolbar ---
+  const undoBtn = button('Undo', () => undo.undo());
+  const redoBtn = button('Redo', () => undo.redo());
+  const refreshUndo = () => {
+    undoBtn.disabled = !undo.canUndo;
+    redoBtn.disabled = !undo.canRedo;
+    undoBtn.title = undo.undoLabel ? `Undo ${undo.undoLabel}` : 'Undo';
+    redoBtn.title = undo.redoLabel ? `Redo ${undo.redoLabel}` : 'Redo';
+  };
+  undo.onChange(refreshUndo);
 
+  const reload = () => { view.selection.clear(); view.refit(); view.render(); undo.reset(); refreshUndo(); };
+  const newBtn = button('New', () => { tree.loadState(new Tree().toState()); reload(); });
+  const openBtn = button('Open…', async () => {
+    const loaded = await openFileDialog();
+    if (loaded) { tree.loadState(loaded.toState()); reload(); }
+  });
+  const saveBtn = button('Save', () => saveJson(tree));
+  const sampleBtn = button('Sample', () => { loadSample(tree); reload(); });
+
+  toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
+    sep(), undoBtn, redoBtn,
+    hint('click empty: add node · drag: move · Delete: remove'));
+
+  // --- status bar ---
   const updateStatus = () => {
     status.textContent =
       `${tree.nodes.size} nodes · ${tree.edges.size} edges · ${tree.pathList().length} leaf paths · ` +
-      `${tree.isFeasible ? 'feasible' : 'INFEASIBLE'}`;
+      `${tree.conditionList().length} conditions · ${tree.isFeasible ? 'feasible' : 'INFEASIBLE'}`;
   };
   tree.onChange(updateStatus);
   updateStatus();
+  refreshUndo();
 
-  return { tree, view };
+  // --- keyboard shortcuts ---
+  window.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (!mod) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo.undo(); }
+    else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); undo.redo(); }
+    else if (k === 's') { e.preventDefault(); saveJson(tree); }
+    else if (k === 'o') { e.preventDefault(); void openBtn.click(); }
+  });
+
+  return { tree, view, undo };
 }
 
 function loadSample(tree: Tree): void {
-  tree.loadState(new Tree().toState()); // clear
+  tree.loadState(new Tree().toState());
   tree.edit(() => {
     const c = tree.addNode(pt(0.5, 0.5));
     tree.addNodeFrom(c.id, pt(0.15, 0.85));
@@ -77,6 +107,11 @@ function strong(text: string): HTMLElement {
   const s = document.createElement('strong');
   s.textContent = text;
   s.style.marginRight = '8px';
+  return s;
+}
+function sep(): HTMLElement {
+  const s = document.createElement('span');
+  s.style.cssText = 'width:1px;height:18px;background:#ccc;margin:0 4px';
   return s;
 }
 function hint(text: string): HTMLElement {
