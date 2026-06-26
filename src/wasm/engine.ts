@@ -70,7 +70,8 @@ export interface CreasePatternResult {
   scale?: number;
   feasible?: boolean;
   nodes?: { i: number; x: number; y: number }[];
-  vertices: { i: number; x: number; y: number }[];
+  /** x,y = paper coords; e,d = folded-form elevation/depth. */
+  vertices: { i: number; x: number; y: number; e: number; d: number }[];
   /** a,b = vertex indices; k = CreaseKind; f = CreaseFold. */
   creases: { i: number; a: number; b: number; k: number; f: number }[];
   /** o = layer order; vs = CCW vertex indices. */

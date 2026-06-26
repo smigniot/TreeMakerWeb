@@ -71,9 +71,13 @@ test.describe('TreeMakerWeb editor', () => {
     await expect(page.locator('.tm-crease.tm-mountain').first()).toBeVisible();
     await expect(page.locator('.tm-crease.tm-valley').first()).toBeVisible();
 
-    // Kill CP removes the overlay.
+    // The folded-form panel previews the base (facets in elevation/depth).
+    await expect(page.locator('.tm-folded .tm-folded-facet').first()).toBeVisible();
+
+    // Kill CP removes both the overlay and the folded-form preview.
     await page.getByRole('button', { name: 'Kill CP' }).click();
     await expect(page.locator('.tm-crease')).toHaveCount(0);
+    await expect(page.locator('.tm-folded .tm-folded-facet')).toHaveCount(0);
   });
 
   test('opens a legacy .tmd5 file', async ({ page }) => {

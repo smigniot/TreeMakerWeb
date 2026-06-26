@@ -5,6 +5,24 @@ Newest entry first.
 
 ---
 
+## Session 7 — Folded-form view
+
+**State at end:** a "Folded form" panel in the sidebar previews the folded base
+— the crease pattern's facets/creases plotted in (elevation, depth) instead of
+paper (x, y), the same projection as the C++ tmwxFoldedFormFrame. Building the CP
+populates it (the 4-flap base → a triangular silhouette); Kill CP / tree edits
+clear it. 46 unit + 6 e2e green.
+
+- Added `e` (elevation) + `d` (depth) per vertex to the CP serializer
+  (`tmVertex::GetElevation/GetDepth`).
+- `src/view/foldedFormView.ts`: auto-fitted SVG, facets filled + mountain/valley
+  creases; wired into `main.ts` (Build/Kill/tree-change).
+
+**Next:** export (SVG/PDF) of the crease pattern; #20 (Web Worker); #14 (legacy
+v5/v3).
+
+---
+
 ## Session 6 — Conditions wired into the spec builder
 
 **State at end:** the spec builder now applies the user's conditions, so

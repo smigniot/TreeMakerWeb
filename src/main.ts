@@ -11,6 +11,7 @@ import { ViewSettingsPanel } from './ui/viewSettingsPanel';
 import { openFileDialog, saveJson } from './ui/files';
 import { optimizeTree, OptimizeMode } from './ui/optimize';
 import { buildTreeCreasePattern, cpStatusMessage } from './ui/creasePattern';
+import { FoldedFormView } from './view/foldedFormView';
 
 export interface App {
   tree: Tree;
@@ -26,7 +27,12 @@ export function mount(root: HTMLElement): App {
   const status = el('div', 'tm-statusbar');
   const inspectorHost = el('div', 'tm-inspector');
   const viewHost = el('div', 'tm-viewsettings');
-  sidebar.append(inspectorHost, viewHost);
+  const foldedPanel = el('div', 'tm-folded-panel');
+  const foldedTitle = el('div', 'tm-panel-title');
+  foldedTitle.textContent = 'Folded form';
+  const foldedHost = el('div', 'tm-folded-host');
+  foldedPanel.append(foldedTitle, foldedHost);
+  sidebar.append(inspectorHost, viewHost, foldedPanel);
   root.append(toolbar, host, sidebar, status);
 
   const tree = new Tree();
@@ -34,6 +40,7 @@ export function mount(root: HTMLElement): App {
   const view = new DesignView(host, tree, { onEdit: (label) => undo.record(label) });
   new Inspector(inspectorHost, tree, view.selection, (label) => undo.record(label));
   new ViewSettingsPanel(viewHost, view);
+  const folded = new FoldedFormView(foldedHost);
 
   // --- toolbar ---
   const undoBtn = button('Undo', () => undo.undo());
@@ -93,6 +100,7 @@ export function mount(root: HTMLElement): App {
       undo.record('Build crease pattern');
       refreshUndo();
       view.setCreasePattern(cp);
+      folded.setCreasePattern(cp);
       status.textContent = `Crease pattern: ${cpStatusMessage(cp.status)} · ${cp.creases.length} creases, ${cp.facets.length} facets`;
     } catch (err) {
       status.textContent = `Build failed: ${(err as Error).message}`;
@@ -101,7 +109,7 @@ export function mount(root: HTMLElement): App {
       buildBtn.disabled = false;
     }
   });
-  const killBtn = button('Kill CP', () => { view.setCreasePattern(null); });
+  const killBtn = button('Kill CP', () => { view.setCreasePattern(null); folded.setCreasePattern(null); });
 
   toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
@@ -118,7 +126,7 @@ export function mount(root: HTMLElement): App {
   tree.onChange(updateStatus);
   // A crease pattern is stale once the tree changes; the Build command re-sets it
   // after its own edit, so it survives.
-  tree.onChange(() => { if (view.creasePattern) view.setCreasePattern(null); });
+  tree.onChange(() => { if (view.creasePattern) { view.setCreasePattern(null); folded.setCreasePattern(null); } });
   updateStatus();
   refreshUndo();
 

@@ -150,7 +150,9 @@ static char* serializeCP(tmTree* t, const char* err, const string& extra) {
     tmVertex* v = verts[i];
     os << "{\"i\":" << v->GetIndex()
        << ",\"x\":" << v->GetLoc().x
-       << ",\"y\":" << v->GetLoc().y << "}";
+       << ",\"y\":" << v->GetLoc().y
+       << ",\"e\":" << v->GetElevation()
+       << ",\"d\":" << v->GetDepth() << "}";
   }
 
   os << "],\"creases\":[";

@@ -70,3 +70,8 @@ body { font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
 .tm-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
 .tm-presets button { font: inherit; padding: 2px 6px; }
 .tm-toolbar button:disabled { opacity: 0.4; }
+
+/* folded-form preview panel */
+.tm-folded-host { height: 220px; background: var(--tm-paper); border: 1px solid var(--tm-border); }
+.tm-folded { display: block; }
+.tm-folded-facet { fill: rgba(26, 95, 180, 0.12); stroke: rgba(26, 95, 180, 0.4); stroke-width: 0.5; }
