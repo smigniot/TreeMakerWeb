@@ -62,17 +62,11 @@ SOURCES+=("$WRAPPER")
 INCLUDES=(-I"$SRC")
 while IFS= read -r d; do INCLUDES+=(-I"$d"); done < <(find "$SRC/tmModel" -type d | sort)
 
-# NOTE: the 2005-era optimizer code has latent UB that an -O2 build miscompiles
-# (layout-sensitive heap corruption in the edge/strain paths, and occasional
-# scale failures). -O1 + SAFE_HEAP runs all golden cases correctly. SAFE_HEAP
-# adds bounds-checked loads/stores (~2x slower) but the result is still compiled
-# Wasm and far faster than a JS reimplementation. Hardening to a clean -O2 build
-# is a tracked follow-up.
-OPT=(-O1 -w -sSAFE_HEAP=1)
+OPT=(-O2 -w)
 DEBUG_FLAGS=()
 if [ "${DEBUG:-0}" = "1" ]; then
   echo "(debug build: assertions + names)"
-  OPT=(-O1 -g2 -sSAFE_HEAP=1)
+  OPT=(-O1 -g2)
   DEBUG_FLAGS=(-sASSERTIONS=2 -sDEMANGLE_SUPPORT=1)
 fi
 
@@ -82,6 +76,10 @@ emcc -std=c++14 "${OPT[@]}" -fexceptions \
   -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createTmEngine \
   -sENVIRONMENT=web,worker,node \
   -sALLOW_MEMORY_GROWTH=1 \
+  -sSTACK_SIZE=5242880 \
+  `# 5 MB stack (Emscripten defaults to 64 KB). The ALM BFGS inverse-Hessian and` \
+  `# state vectors for large trees (~33 nodes) overflow the tiny default stack,` \
+  `# corrupting adjacent memory — the root cause of the prior nondeterminism.` \
   ${DEBUG_FLAGS[@]+"${DEBUG_FLAGS[@]}"} \
   -sEXPORTED_FUNCTIONS=_tmOptimize,_malloc,_free \
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString \

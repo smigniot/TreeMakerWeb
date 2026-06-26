@@ -5,6 +5,28 @@ Newest entry first.
 
 ---
 
+## Session 4 — Optimizer memory bug FIXED (root cause: Wasm stack size)
+
+**State at end:** the prior P2 "known issue" is resolved. A native ASan+UBSan
+build of the tester reported **no** memory error — ruling out a portable
+heap/UB bug. The real cause: **Emscripten's 64 KB default Wasm stack**. The ALM
+BFGS inverse-Hessian (~67×67 doubles) and state vectors for the 33-node packings
+overflow it, corrupting adjacent memory (native's 8 MB stack hides it) — which
+explains the layout-dependent nondeterminism, the -O1/-O2 difference, and the
+cross-call corruption.
+
+**Fix:** build with `-O2` + `-sSTACK_SIZE=5242880` (5 MB); dropped SAFE_HEAP and
+the per-call fresh instance. Now **all 5 golden cases pass deterministically in
+one reused module instance**, reproducing the original 2005 values to ~6 digits
+(file_2 → 0.074658, file_3 → 0.056381). Diagnostic: `tools/oracle/asan.sh`.
+
+44 unit (no skips) + 5 e2e green. Tasks #15/#16/#19 done; #20 (Web Worker) and
+#14 (legacy v5/v3) remain.
+
+**Next session:** P3 — crease-pattern generation.
+
+---
+
 ## Session 3 — P2 Wasm optimizer (scale packing working end-to-end)
 
 **State at end:** the headline feature — circle/river packing — runs in the

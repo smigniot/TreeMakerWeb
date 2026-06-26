@@ -2,7 +2,7 @@
 // lazily and exposes a single async optimize() call. Used directly in tests and
 // behind a Web Worker in the app.
 
-import createTmEngine from './generated/tmengine.js';
+import createTmEngine, { type TmEngineModule } from './generated/tmengine.js';
 
 export const enum OptimizeMode {
   Scale = 0, // circle/river packing — maximize scale
@@ -19,18 +19,18 @@ export interface OptimizeResult {
   edges: { i: number; strain: number; stiffness: number }[];
 }
 
+let modulePromise: Promise<TmEngineModule> | null = null;
+function getModule(): Promise<TmEngineModule> {
+  return (modulePromise ??= createTmEngine());
+}
+
 /**
- * Run one optimization pass on a TreeMaker document (v4/v5 text).
- *
- * A FRESH Wasm instance is created per call. The 2005-era optimizer leaves the
- * module heap in a state that corrupts a subsequent run on the same instance
- * (latent UB the desktop build tolerated); a clean instance per call sidesteps
- * it. Optimization is a user-triggered command, not a hot loop, so the
- * re-instantiation cost (~ms) is irrelevant. (Reusing one instance is the
- * tracked follow-up to harden.)
+ * Run one optimization pass on a TreeMaker document (v4/v5 text). The module is
+ * instantiated once and reused — safe now that the Wasm stack is sized for the
+ * optimizer's large-tree working set (see tools/wasm/build.sh -sSTACK_SIZE).
  */
 export async function optimize(docText: string, mode: OptimizeMode): Promise<OptimizeResult> {
-  const M = await createTmEngine();
+  const M = await getModule();
   const ptr = M.ccall('tmOptimize', 'number', ['string', 'number'], [docText, mode]);
   const json = M.UTF8ToString(ptr);
   M._free(ptr);

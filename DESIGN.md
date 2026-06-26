@@ -349,13 +349,12 @@ facets with kinds, folds, and layer order) — never raw pointers.
 
 **Progress:** P0 ✅ (scaffold + native oracle harness), P1 ✅ (TS model, JSON +
 legacy-v4 import, pure-SVG surface, inspector/view-settings/undo, file open/save),
-and P2 ✅ *partial* — the **scale optimizer (circle/river packing) works
-end-to-end in the browser via Wasm** (Emscripten build, golden-tested anchors,
-TS↔v4 bridge, Scale Everything / Minimize Strain commands). Known issue: latent
-UB in the legacy optimizer makes the hardest 33-node packings nondeterministic
-under Wasm (built `-O1 + SAFE_HEAP`, those cases skipped, fresh realm per call;
-tracked for a native-ASan fix). 41 unit + 5 e2e green. Next: P3 (crease pattern).
-See `HISTORY.md` for the running log.
+and P2 ✅ — the **optimizer (circle/river packing) works end-to-end in the
+browser via Wasm** (Emscripten `-O2` build, TS↔v4 bridge, Scale Everything /
+Minimize Strain commands). The early nondeterminism on large packings was a Wasm
+**stack-size** bug (64 KB default vs. the ALM Hessian's working set), fixed with
+`-sSTACK_SIZE=5 MB`; all 5 golden cases now pass deterministically to ~6 digits.
+44 unit + 5 e2e green. Next: P3 (crease pattern). See `HISTORY.md`.
 
 ---
 
