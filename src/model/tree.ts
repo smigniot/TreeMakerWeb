@@ -378,6 +378,67 @@ export class Tree {
     this.isFeasible = feasible;
   }
 
+  // ------------------------------------------------------------ serialization
+  /** Authoritative snapshot (no derived data). Used by JSON IO and undo. */
+  toState(): TreeState {
+    return {
+      format: 1,
+      paper: { ...this.paper },
+      scale: this.scale,
+      symmetry: { ...this.symmetry, loc: { ...this.symmetry.loc } },
+      rootNode: this.rootNode,
+      nodes: this.nodeList().map((n) => ({ id: n.id, loc: { ...n.loc }, label: n.label, isSub: n.isSub })),
+      edges: this.edgeList().map((e) => ({
+        id: e.id, fromNode: e.fromNode, toNode: e.toNode,
+        length: e.length, strain: e.strain, stiffness: e.stiffness, label: e.label,
+      })),
+      conditions: this.conditionList().map((c) => ({ ...c })),
+    };
+  }
+
+  /** Build a Tree from a snapshot (deep, runs cleanup to derive paths/flags). */
+  static fromState(s: TreeState): Tree {
+    const t = new Tree();
+    t.paper = { ...s.paper };
+    t.scale = s.scale;
+    t.symmetry = { ...s.symmetry, loc: { ...s.symmetry.loc } };
+    t.rootNode = s.rootNode;
+    for (const n of s.nodes) {
+      t.nodes.set(n.id, { id: n.id, loc: { ...n.loc }, label: n.label, isSub: n.isSub, isLeaf: false });
+    }
+    for (const e of s.edges) {
+      t.edges.set(e.id, { ...e });
+    }
+    for (const c of s.conditions) {
+      t.conditions.set(c.id, { ...c });
+    }
+    // Resume id allocation past the highest used id of each kind.
+    t.nextNodeId = nextId(s.nodes);
+    t.nextEdgeId = nextId(s.edges);
+    t.nextConditionId = nextId(s.conditions);
+    t.cleanup();
+    return t;
+  }
+
+  /** Replace this tree's contents from a snapshot in-place (for undo/redo). */
+  loadState(s: TreeState): void {
+    const fresh = Tree.fromState(s);
+    this.paper = fresh.paper;
+    this.scale = fresh.scale;
+    this.symmetry = fresh.symmetry;
+    this.rootNode = fresh.rootNode;
+    this.nodes.clear(); for (const [k, v] of fresh.nodes) this.nodes.set(k, v);
+    this.edges.clear(); for (const [k, v] of fresh.edges) this.edges.set(k, v);
+    this.paths.clear(); for (const [k, v] of fresh.paths) this.paths.set(k, v);
+    this.conditions.clear(); for (const [k, v] of fresh.conditions) this.conditions.set(k, v);
+    this.nextNodeId = nextId([...this.nodes.values()]);
+    this.nextEdgeId = nextId([...this.edges.values()]);
+    this.nextConditionId = nextId([...this.conditions.values()]);
+    this.isFeasible = fresh.isFeasible;
+    this.version++;
+    this.notify();
+  }
+
   // --------------------------------------------------------- condition context
   conditionContext(): ConditionContext {
     const activePairs = new Set<string>();
@@ -398,8 +459,29 @@ export class Tree {
   }
 }
 
+// ---------------------------------------------------------------- serialization
+/** Plain, serializable snapshot of the authoritative state (no derived data).
+ * This is the shape of the native JSON format and of undo snapshots. */
+export interface TreeState {
+  format: 1;
+  paper: Paper;
+  scale: number;
+  symmetry: Symmetry;
+  rootNode: NodeId | null;
+  nodes: Array<Pick<TreeNode, 'id' | 'loc' | 'label' | 'isSub'>>;
+  edges: Array<Pick<Edge, 'id' | 'fromNode' | 'toNode' | 'length' | 'strain' | 'stiffness' | 'label'>>;
+  conditions: Condition[];
+}
+
 function pairKey(a: NodeId, b: NodeId): string {
   return a < b ? `${a}-${b}` : `${b}-${a}`;
+}
+
+/** One past the maximum id present (1 if empty). */
+function nextId(items: ReadonlyArray<{ id: number }>): number {
+  let max = 0;
+  for (const it of items) if (it.id > max) max = it.id;
+  return max + 1;
 }
 
 function conditionRefsAnyNode(c: Condition, set: ReadonlySet<NodeId>): boolean {
