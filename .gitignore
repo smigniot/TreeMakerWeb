@@ -13,6 +13,10 @@ coverage/
 /tools/oracle/build/
 /tools/oracle/tmModelTester
 
+# Wasm build intermediates (patched source copy). The generated ES module under
+# src/wasm/generated/ IS committed so the app/tests run without Emscripten.
+/tools/wasm/build/
+
 # Editor / OS
 .DS_Store
 *.log
