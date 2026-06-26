@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+
+# Oracle build artifacts (generated from Orig/ on demand; outputs are committed)
+/tools/oracle/build/
+/tools/oracle/tmModelTester
+
+# Editor / OS
+.DS_Store
+*.log

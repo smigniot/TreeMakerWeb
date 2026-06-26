@@ -1,0 +1,36 @@
+**************************************************
+TreeMaker Model Test Program
+**************************************************
+
+Using ALM optimizer
+Reading in file /Users/sebastien/PrivateCode/TreeMakerWeb/Orig/Source/test/tmModelTester/tmModelTester_1.tmd5
+Optimizing scale of tmModelTester_1.tmd5...
+New scale is 0.517638
+Feasibility after optimization is true 
+Elapsed time = 793 ticks
+
+Reading in file /Users/sebastien/PrivateCode/TreeMakerWeb/Orig/Source/test/tmModelTester/tmModelTester_2.tmd5
+Optimizing scale of tmModelTester_2.tmd5...
+New scale is 0.073832
+Feasibility after optimization is true 
+Elapsed time = 14080 ticks
+
+Reading in file /Users/sebastien/PrivateCode/TreeMakerWeb/Orig/Source/test/tmModelTester/tmModelTester_3.tmd5
+Optimizing scale of tmModelTester_3.tmd5...
+New scale is 0.049425
+Feasibility after optimization is true 
+Elapsed time = 3614 ticks
+
+Reading in file /Users/sebastien/PrivateCode/TreeMakerWeb/Orig/Source/test/tmModelTester/tmModelTester_4.tmd5
+Maximizing edge strain of tmModelTester_4.tmd5...
+Feasibility after optimization is true 
+Elapsed time = 18446744073709509514 ticks
+
+Reading in file /Users/sebastien/PrivateCode/TreeMakerWeb/Orig/Source/test/tmModelTester/tmModelTester_5.tmd5
+Minimizing strain of tmModelTester_5.tmd5...
+Optimized over 14 nodes and 20 edges. 
+Stiffness-weighted RMS strain is 3.580266%
+Feasibility after optimization is true 
+Elapsed time = 2779 ticks
+
+

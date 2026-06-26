@@ -1,0 +1,54 @@
+{
+  "_comment": "Golden regression baseline for the TreeMaker model/optimizer port. Consumed by the TS solver regression tests in P2. Regenerate with `npm run oracle`. See README.md for the platform-sensitivity caveat: the ALM optimizer is non-convex, so complex cases drift across compiler/platform while simple cases reproduce to ~6 digits. Compare the Wasm build tolerance-based against THIS machine's native run.",
+  "source": "Orig/Source/test/tmModelTester (ALM backend, tmUSE_ALM)",
+  "generatedBy": "tools/oracle/build_and_run.sh (clang, c++14, -O2)",
+  "cases": [
+    {
+      "file": "tmModelTester_1.tmd5",
+      "op": "scale",
+      "desc": "simple 3-star, no constraints",
+      "scale": 0.517638,
+      "feasible": true,
+      "historical": { "scale": 0.517637 },
+      "tolerance": 1e-4,
+      "anchor": true
+    },
+    {
+      "file": "tmModelTester_2.tmd5",
+      "op": "scale",
+      "desc": "unoptimized centipede, no constraints",
+      "scale": 0.073832,
+      "feasible": true,
+      "historical": { "scale": 0.074658 },
+      "tolerance": 2e-3,
+      "anchor": false
+    },
+    {
+      "file": "tmModelTester_3.tmd5",
+      "op": "scale",
+      "desc": "centipede with symmetry constraints, infeasible start",
+      "scale": 0.049425,
+      "feasible": true,
+      "historical": { "scale": 0.056381 },
+      "tolerance": 1e-2,
+      "anchor": false
+    },
+    {
+      "file": "tmModelTester_4.tmd5",
+      "op": "edge",
+      "desc": "optimized centipede, some nodes unpinned (edge strain max)",
+      "feasible": true,
+      "anchor": false
+    },
+    {
+      "file": "tmModelTester_5.tmd5",
+      "op": "strain",
+      "desc": "scorpion, many path-active + edge-strain constraints, infeasible start",
+      "rmsStrainPercent": 3.580266,
+      "feasible": true,
+      "historical": { "rmsStrainPercent": 3.580266 },
+      "tolerance": 1e-3,
+      "anchor": true
+    }
+  ]
+}
