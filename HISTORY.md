@@ -5,6 +5,46 @@ Newest entry first.
 
 ---
 
+## Session 3 — P2 Wasm optimizer (scale packing working end-to-end)
+
+**State at end:** the headline feature — circle/river packing — runs in the
+browser via WebAssembly. Click **Scale Everything** and the tree packs (the
+4-flap sample optimizes to scale ≈ 0.5, feasible); **Minimize Strain** wired too.
+`npm test` (41 pass, 3 skipped), `npm run test:e2e` (5 pass incl. an in-browser
+optimize), `npm run typecheck`, `npm run build` all green.
+
+**Toolchain:** installed Emscripten 6.0.1 at `~/emsdk` (`source
+~/emsdk/emsdk_env.sh`).
+
+**P2a/P2b — Wasm engine + golden regression:**
+- `tools/wasm/build.sh` compiles tmModel + optimizers + ALM to Wasm (ES6 module
+  at `src/wasm/generated/`, committed) with `src/wasm/tmwasm.cpp` exposing
+  `tmOptimize(docText, mode)`. Reuses the oracle's modern-clang patches.
+- `src/wasm/engine.ts` (fresh module per call) + golden test asserting anchors
+  exactly (file_1 scale 0.517637, file_5 strain — 5/5 deterministic).
+
+**P2c/P2d — wired to the app:**
+- `src/io/legacy/writeV4.ts` (TS → v4 export; validated: exported tree optimizes
+  to the same scale as the original). `src/ui/optimize.ts` runs export → optimize
+  → applies scale/positions/strains as one undoable edit. Toolbar commands +
+  busy/feasibility status; e2e runs it in a real browser.
+
+**KNOWN ISSUE (tracked, task #19):** the 2005 optimizer has latent
+layout-dependent UB (uninitialized read / overflow) that makes the hardest
+33-node packings (file_2/3/4) nondeterministic under Wasm. Built `-O1 +
+SAFE_HEAP`; those golden cases are skipped; each optimization runs in a fresh
+Wasm realm (the app calls it per command). Anchors and typical interactive trees
+are stable. Fix needs a native ASan/UBSan pass on tmModelTester.
+
+**Deferred (tracked):** optimizer in a Web Worker (#20, currently main-thread);
+legacy v5/v3 import + export (#14).
+
+**Next session:** P3 — crease-pattern generation (compile cleanup/molecule/
+facet-order to Wasm; Build Crease Pattern command; render creases/facets). Likely
+gated on the #19 memory fix, since CP generation exercises far more of the model.
+
+---
+
 ## Session 2 — P0 scaffold + P1 viewer/editor (complete)
 
 **State at end:** a working **browser viewer/editor** (no solver yet). `npm run

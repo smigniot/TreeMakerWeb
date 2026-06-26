@@ -9,6 +9,7 @@ import { UndoManager } from './ui/undo';
 import { Inspector } from './ui/inspector';
 import { ViewSettingsPanel } from './ui/viewSettingsPanel';
 import { openFileDialog, saveJson } from './ui/files';
+import { optimizeTree, OptimizeMode } from './ui/optimize';
 
 export interface App {
   tree: Tree;
@@ -53,8 +54,29 @@ export function mount(root: HTMLElement): App {
   const saveBtn = button('Save', () => saveJson(tree));
   const sampleBtn = button('Sample', () => { loadSample(tree); reload(); });
 
+  // --- optimizer commands ---
+  const optimizeButtons: HTMLButtonElement[] = [];
+  const runOptimize = async (label: string, mode: OptimizeMode) => {
+    optimizeButtons.forEach((b) => (b.disabled = true));
+    status.textContent = `${label}…`;
+    try {
+      const res = await optimizeTree(tree, mode);
+      undo.record(label);
+      refreshUndo();
+      if (!res.feasible) status.textContent = `${label}: result is INFEASIBLE`;
+    } catch (err) {
+      status.textContent = `${label} failed: ${(err as Error).message}`;
+    } finally {
+      optimizeButtons.forEach((b) => (b.disabled = false));
+    }
+  };
+  const scaleBtn = button('Scale Everything', () => void runOptimize('Scale', OptimizeMode.Scale));
+  const strainBtn = button('Minimize Strain', () => void runOptimize('Minimize strain', OptimizeMode.Strain));
+  optimizeButtons.push(scaleBtn, strainBtn);
+
   toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
+    sep(), scaleBtn, strainBtn,
     hint('click empty: add node · drag: move · Delete: remove'));
 
   // --- status bar ---

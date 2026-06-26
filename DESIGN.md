@@ -347,10 +347,15 @@ facets with kinds, folds, and layer order) — never raw pointers.
   Crease Pattern command; crease/facet rendering; folded-form view.
 - **P4 — Polish:** export (SVG/PNG/PDF), docs, remaining conditions, edge cases.
 
-**Progress:** P0 ✅ (scaffold + native oracle harness) and P1 ✅ (TS model, JSON +
-legacy-v4 import, pure-SVG surface, inspector/view-settings/undo, file open/save;
-37 unit tests + 4 Playwright e2e green). Next: P2 (Wasm ALM optimizer). See
-`HISTORY.md` for the running log.
+**Progress:** P0 ✅ (scaffold + native oracle harness), P1 ✅ (TS model, JSON +
+legacy-v4 import, pure-SVG surface, inspector/view-settings/undo, file open/save),
+and P2 ✅ *partial* — the **scale optimizer (circle/river packing) works
+end-to-end in the browser via Wasm** (Emscripten build, golden-tested anchors,
+TS↔v4 bridge, Scale Everything / Minimize Strain commands). Known issue: latent
+UB in the legacy optimizer makes the hardest 33-node packings nondeterministic
+under Wasm (built `-O1 + SAFE_HEAP`, those cases skipped, fresh realm per call;
+tracked for a native-ASan fix). 41 unit + 5 e2e green. Next: P3 (crease pattern).
+See `HISTORY.md` for the running log.
 
 ---
 

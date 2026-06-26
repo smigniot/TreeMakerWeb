@@ -40,6 +40,26 @@ test.describe('TreeMakerWeb editor', () => {
     await expect(page.locator('.tm-inspector .tm-panel-title')).toContainText('Node');
   });
 
+  test('Scale Everything runs the Wasm optimizer and packs the tree', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    await expect(page.locator('.tm-node')).toHaveCount(5);
+
+    // Tree inspector shows the default scale 0.1.
+    const scaleInput = page.locator('.tm-inspector .tm-row', { hasText: 'Scale' }).locator('input');
+    await expect(scaleInput).toHaveValue('0.1');
+
+    await page.getByRole('button', { name: 'Scale Everything' }).click();
+
+    // The optimizer increases the scale (circle/river packing) and stays feasible.
+    await expect(page.locator('.tm-statusbar')).toContainText('feasible', { timeout: 15000 });
+    await expect(page.locator('.tm-statusbar')).not.toContainText('failed');
+    await expect.poll(async () => Number(await scaleInput.inputValue())).toBeGreaterThan(0.2);
+    // Undo restores the pre-optimization scale.
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(scaleInput).toHaveValue('0.1');
+  });
+
   test('opens a legacy .tmd5 file', async ({ page }) => {
     await page.goto('/');
     const [chooser] = await Promise.all([
