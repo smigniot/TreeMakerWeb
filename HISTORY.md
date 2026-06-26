@@ -5,6 +5,26 @@ Newest entry first.
 
 ---
 
+## Session 14 — Condition-creation UI (the missing piece)
+
+**Status:** conditions can now be **created from the UI** (previously only
+imported/applied). Ports TreeMaker's selection-based Condition menu into the
+Inspector. 57 unit + 10 e2e green.
+
+- Select **1 node** → Stick to edge / corner / symmetry line / Fix here.
+- Select **1 edge** → Length fixed.
+- Select **2 nodes** → Paired / Path active / Path angle (prompt) / Path angle
+  quant (prompt); **3 nodes** → Collinear; **2 edges** → Same strain.
+- The **Tree panel** (no selection) lists all conditions with remove ✕ and an
+  infeasible marker; the Condition panel has a Remove button. Markers already
+  render on the canvas and colour by feasibility.
+- `forms.ts`: `subheading`/`actionButton`/`buttonGroup`. e2e: select leaf → Stick
+  to edge → marker + status + Tree-panel list.
+
+(Resolves the "no condition-creation UI" gap noted at the Session 13 pause.)
+
+---
+
 ## Session 13 — README + pause checkpoint
 
 **Status: paused, in a clean, publishable state.** Working tree committed; ready

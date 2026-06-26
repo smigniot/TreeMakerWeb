@@ -14,9 +14,11 @@ and rendering are TypeScript.
 
 - **Draw a tree** — click to add nodes, drag to move, Delete to remove. The tree
   is the stick figure of your subject; each edge becomes a flap.
-- **Add conditions** — pin nodes to the paper edge/corner/symmetry line, fix
-  positions, pair/collinear nodes, fix or quantize path angles, fix edge
-  lengths, equalize strains.
+- **Add conditions** — **select a node or edge** (or 2–3 nodes / 2 edges) and the
+  buttons appear in the Inspector (right panel): stick a node to the paper
+  edge/corner/symmetry line, fix its position, pair/make‑collinear nodes, fix or
+  quantize path angles, fix edge lengths, equalize strains. Conditions show as
+  markers on the canvas and are listed (with remove ✕) in the Tree panel.
 - **Pack** — *Scale Everything* (circle/river packing — maximize the model size),
   *Minimize Strain*.
 - **Build the crease pattern** — full molecule generation with mountain/valley

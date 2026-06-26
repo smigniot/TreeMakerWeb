@@ -3,8 +3,9 @@
 // group summary. Edits apply immediately and report an undo label.
 
 import type { Tree } from '../model/tree';
+import type { NewCondition } from '../model/conditions';
 import type { Selection } from '../view/selection';
-import { row, numberInput, textInput, checkbox, readonlyField, heading } from './forms';
+import { row, numberInput, textInput, checkbox, readonlyField, heading, subheading, actionButton, buttonGroup } from './forms';
 
 export class Inspector {
   private disposers: Array<() => void> = [];
@@ -28,6 +29,10 @@ export class Inspector {
   private apply(label: string, fn: () => void): void {
     this.tree.edit(fn);
     this.onEdit(label);
+  }
+
+  private addCond(c: NewCondition): void {
+    this.apply('Add condition', () => this.tree.addCondition(c));
   }
 
   render(): void {
@@ -59,6 +64,22 @@ export class Inspector {
         row('Sym °', numberInput(t.symmetry.angle, (v) => this.apply('Set symmetry', () => t.setSymmetry({ angle: v })), { step: 5 })),
       );
     }
+
+    // All conditions, with remove buttons. (Create them by selecting nodes/edges.)
+    const conds = this.tree.conditionList();
+    this.host.append(subheading(`Conditions (${conds.length})`));
+    if (conds.length === 0) {
+      const hint = readonlyField('Select a node or edge to add conditions.');
+      hint.style.color = '#888';
+      this.host.append(row('', hint));
+    }
+    for (const c of conds) {
+      const feas = this.tree.conditionFeasible(c);
+      const label = readonlyField(`${c.type}${feas === false ? ' ✗' : ''}`);
+      if (feas === false) label.style.color = 'var(--tm-infeasible)';
+      const rm = actionButton('✕', () => this.apply('Remove condition', () => this.tree.removeCondition(c.id)), 'Remove');
+      this.host.append(row(`#${c.id}`, buttonGroup([label, rm])));
+    }
   }
 
   private renderNode(id: number): void {
@@ -72,6 +93,14 @@ export class Inspector {
       row('Leaf', readonlyField(n.isLeaf ? 'yes' : 'no')),
       row('Sub', readonlyField(n.isSub ? 'yes' : 'no')),
     );
+
+    this.host.append(subheading('Add condition'));
+    this.host.append(buttonGroup([
+      actionButton('Stick to edge', () => this.addCond({ type: 'NodeOnEdge', tag: 'CNen', node: id }), 'Node must lie on a paper edge'),
+      actionButton('Stick to corner', () => this.addCond({ type: 'NodeOnCorner', tag: 'CNkn', node: id }), 'Node must lie on a paper corner'),
+      actionButton('On symmetry line', () => this.addCond({ type: 'NodeSymmetric', tag: 'CNsn', node: id }), 'Node must lie on the symmetry line (enable symmetry in the Tree panel)'),
+      actionButton('Fix here', () => this.addCond({ type: 'NodeFixed', tag: 'CNfn', node: id, xFixed: true, yFixed: true, xFixValue: n.loc.x, yFixValue: n.loc.y }), 'Fix the node at its current position'),
+    ]));
   }
 
   private renderEdge(id: number): void {
@@ -84,6 +113,11 @@ export class Inspector {
       row('Stiffness', numberInput(e.stiffness, (v) => this.apply('Edit edge', () => this.tree.setEdgeProps(id, { stiffness: v })), { step: 0.1 })),
       row('Label', textInput(e.label, (v) => this.apply('Edit edge', () => this.tree.setEdgeProps(id, { label: v })))),
     );
+
+    this.host.append(subheading('Add condition'));
+    this.host.append(buttonGroup([
+      actionButton('Length fixed', () => this.addCond({ type: 'EdgeLengthFixed', tag: 'CNfe', edge: id }), 'Edge strain forced to zero'),
+    ]));
   }
 
   private renderCondition(id: number): void {
@@ -96,13 +130,51 @@ export class Inspector {
       row('Tag', readonlyField(c.tag)),
       row('Feasible', readonlyField(feas === undefined ? '—' : feas ? 'yes' : 'no')),
     );
+    this.host.append(buttonGroup([
+      actionButton('Remove', () => this.apply('Remove condition', () => this.tree.removeCondition(id))),
+    ]));
   }
 
   private renderGroup(): void {
     const refs = this.selection.list();
-    const counts = new Map<string, number>();
-    for (const r of refs) counts.set(r.kind, (counts.get(r.kind) ?? 0) + 1);
+    const nodeIds = refs.filter((r) => r.kind === 'node').map((r) => r.id);
+    const edgeIds = refs.filter((r) => r.kind === 'edge').map((r) => r.id);
     this.host.append(heading(`${refs.length} selected`));
-    for (const [kind, n] of counts) this.host.append(row(kind, readonlyField(String(n))));
+    this.host.append(row('nodes', readonlyField(String(nodeIds.length))));
+    this.host.append(row('edges', readonlyField(String(edgeIds.length))));
+
+    const buttons: HTMLElement[] = [];
+    if (nodeIds.length === 2) {
+      const [a, b] = nodeIds as [number, number];
+      buttons.push(
+        actionButton('Paired', () => this.addCond({ type: 'NodesPaired', tag: 'CNpn', node1: a, node2: b }), 'Mirror the two nodes across the symmetry line'),
+        actionButton('Path active', () => this.addCond({ type: 'PathActive', tag: 'CNap', node1: a, node2: b }), 'Make the path between the two leaf nodes taut'),
+        actionButton('Path angle…', () => {
+          const ang = Number(window.prompt('Path angle (degrees):', '0'));
+          if (Number.isFinite(ang)) this.addCond({ type: 'PathAngleFixed', tag: 'CNfp', node1: a, node2: b, angle: ang });
+        }, 'Active path at a fixed angle'),
+        actionButton('Path angle quant…', () => {
+          const q = Number(window.prompt('Quantization N (e.g. 2, 4, 8):', '4'));
+          if (Number.isInteger(q) && q >= 1) this.addCond({ type: 'PathAngleQuant', tag: 'CNqp', node1: a, node2: b, quant: q, quantOffset: 0 });
+        }, 'Active path at a quantized angle (180°/N steps)'),
+      );
+    }
+    if (nodeIds.length === 3) {
+      const [a, b, c] = nodeIds as [number, number, number];
+      buttons.push(actionButton('Collinear', () => this.addCond({ type: 'NodesCollinear', tag: 'CNcn', node1: a, node2: b, node3: c }), 'The three nodes must be collinear'));
+    }
+    if (edgeIds.length === 2) {
+      const [a, b] = edgeIds as [number, number];
+      buttons.push(actionButton('Same strain', () => this.addCond({ type: 'EdgesSameStrain', tag: 'CNes', edge1: a, edge2: b }), 'The two edges must have equal strain'));
+    }
+    if (buttons.length) {
+      this.host.append(subheading('Add condition'));
+      this.host.append(buttonGroup(buttons));
+    } else {
+      this.host.append(subheading('Add condition'));
+      const hint = readonlyField('Select 2–3 nodes or 2 edges.');
+      hint.style.color = '#888';
+      this.host.append(row('', hint));
+    }
   }
 }

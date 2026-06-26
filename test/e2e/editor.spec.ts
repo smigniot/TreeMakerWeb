@@ -102,6 +102,24 @@ test.describe('TreeMakerWeb editor', () => {
     expect(svg).toContain('<line ');
   });
 
+  test('adds a condition from the inspector', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    // select a leaf node → the inspector shows condition buttons
+    await page.locator('.tm-node.tm-leaf').first().click();
+    await expect(page.locator('.tm-inspector')).toContainText('Add condition');
+
+    await page.getByRole('button', { name: 'Stick to edge' }).click();
+    // a condition marker is drawn and the status bar counts it
+    await expect(page.locator('.tm-condition')).not.toHaveCount(0);
+    await expect(page.locator('.tm-statusbar')).toContainText('1 conditions');
+
+    // Escape clears the selection → Tree panel lists the condition
+    await page.locator('.tm-design').focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tm-inspector')).toContainText('Conditions (1)');
+  });
+
   test('exports the crease pattern as FOLD', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Sample' }).click();

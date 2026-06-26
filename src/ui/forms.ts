@@ -58,3 +58,26 @@ export function heading(text: string): HTMLElement {
   h.textContent = text;
   return h;
 }
+
+export function subheading(text: string): HTMLElement {
+  const h = document.createElement('div');
+  h.className = 'tm-subhead';
+  h.textContent = text;
+  return h;
+}
+
+export function actionButton(label: string, onClick: () => void, title?: string): HTMLButtonElement {
+  const b = document.createElement('button');
+  b.className = 'tm-action';
+  b.textContent = label;
+  if (title) b.title = title;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+export function buttonGroup(buttons: HTMLElement[]): HTMLElement {
+  const d = document.createElement('div');
+  d.className = 'tm-btn-group';
+  d.append(...buttons);
+  return d;
+}
