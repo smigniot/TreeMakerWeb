@@ -10,6 +10,7 @@ import { Inspector } from './ui/inspector';
 import { ViewSettingsPanel } from './ui/viewSettingsPanel';
 import { openFileDialog, saveJson, downloadText } from './ui/files';
 import { creasePatternToSvg } from './io/svgExport';
+import { creasePatternToFoldString } from './io/foldExport';
 import { optimizeTree, OptimizeMode } from './ui/optimize';
 import { buildTreeCreasePattern, cpStatusMessage } from './ui/creasePattern';
 import { exportTreeV5 } from './ui/legacyExport';
@@ -129,11 +130,15 @@ export function mount(root: HTMLElement): App {
     if (!view.creasePattern) { status.textContent = 'Build the crease pattern first, then Export SVG.'; return; }
     downloadText(creasePatternToSvg(view.creasePattern, tree.paper), 'crease-pattern.svg', 'image/svg+xml');
   });
+  const exportFoldBtn = button('Export .fold', () => {
+    if (!view.creasePattern) { status.textContent = 'Build the crease pattern first, then Export .fold.'; return; }
+    downloadText(creasePatternToFoldString(view.creasePattern), 'crease-pattern.fold', 'application/json');
+  });
 
   toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, exportTmBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
     sep(), scaleBtn, strainBtn,
-    sep(), buildBtn, killBtn, exportSvgBtn,
+    sep(), buildBtn, killBtn, exportSvgBtn, exportFoldBtn,
     hint('click empty: add node · drag: move · Delete: remove'));
 
   // --- status bar ---

@@ -102,6 +102,30 @@ test.describe('TreeMakerWeb editor', () => {
     expect(svg).toContain('<line ');
   });
 
+  test('exports the crease pattern as FOLD', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    await page.getByRole('button', { name: 'Build Crease Pattern' }).click();
+    await expect(page.locator('.tm-crease')).not.toHaveCount(0);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export .fold' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('crease-pattern.fold');
+    const stream = await download.createReadStream();
+    const text = await new Promise<string>((resolve) => {
+      let s = '';
+      stream.on('data', (c) => (s += c));
+      stream.on('end', () => resolve(s));
+    });
+    const fold = JSON.parse(text);
+    expect(fold.frame_classes).toContain('creasePattern');
+    expect(fold.vertices_coords.length).toBeGreaterThan(0);
+    expect(fold.edges_assignment).toContain('M');
+    expect(fold.edges_assignment).toContain('V');
+  });
+
   test('exports a .tmd5 desktop TreeMaker can open', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Sample' }).click();

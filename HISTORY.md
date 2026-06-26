@@ -5,6 +5,23 @@ Newest entry first.
 
 ---
 
+## Session 12 — FOLD (.fold) export
+
+**State at end:** an **Export .fold** toolbar button saves the crease pattern in
+the standard FOLD origami format (readable by Origami Simulator etc.). 57 unit +
+9 e2e green.
+
+- `src/io/foldExport.ts` `creasePatternToFold(cp)`: pure transform → FOLD JSON
+  with `vertices_coords`, `edges_vertices` (remapped to 0-based contiguous),
+  `edges_assignment` (M/V/B/F), `edges_foldAngle` (±180/0), `faces_vertices`.
+  Coords in paper units, y up (no flip — matches FOLD).
+- Button downloads `crease-pattern.fold`; unit tests cover the remap + assignment
+  mapping; e2e parses the downloaded JSON and checks the FOLD frame + M/V edges.
+
+**Next (open follow-ups):** v3 import; optimize progress/cancel; PDF export.
+
+---
+
 ## Session 11 — Legacy v5 export (desktop opens our files)
 
 **State at end:** an **Export .tmd5** toolbar button saves the current design as a
