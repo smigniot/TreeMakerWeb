@@ -5,6 +5,23 @@ Newest entry first.
 
 ---
 
+## Session 15 — Fix: writeV4 dropped 5 condition types (Scale Everything ignored them)
+
+**Found while verifying the new condition UI end-to-end.** `writeV4` (the
+Scale/Edge/Strain optimize path) only serialized 6 of the 11 condition types, so
+`NodeFixed`, `NodesCollinear`, `EdgeLengthFixed`, `PathAngleFixed`,
+`PathAngleQuant` were silently dropped — the optimizer never saw them. (The spec
+path used by Build Crease Pattern already handled all 11.)
+
+- `writeV4.ts`: added the missing 5 cases with the correct `numLines` per
+  `PutRestv4`.
+- Tests: `optimize.test.ts` — optimizeTree honors a `NodeFixed` pin (node stays
+  at its fixed position after Scale Everything). Browser-verified end‑to‑end:
+  select leaf → Fix here → Scale Everything → node stays at (0.15, 0.85),
+  feasible, zero console errors. 59 unit + 10 e2e green.
+
+---
+
 ## Session 14 — Condition-creation UI (the missing piece)
 
 **Status:** conditions can now be **created from the UI** (previously only

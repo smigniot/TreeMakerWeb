@@ -156,14 +156,17 @@ type Writer = (...t: (string | number)[]) => void;
 
 function writeCondition(c: Condition, w: Writer, nPtr: (id: number) => string, ePtr: (id: number) => string): void {
   switch (c.type) {
+    // numLines per each condition's PutRestv4 (verified against the C++ source).
     case 'NodesPaired': w('CNpn', 2, nPtr(c.node1), nPtr(c.node2)); break;
     case 'NodeSymmetric': w('CNsn', 1, nPtr(c.node)); break;
     case 'PathActive': w('CNap', 2, nPtr(c.node1), nPtr(c.node2)); break;
     case 'NodeOnEdge': w('CNen', 1, nPtr(c.node)); break;
     case 'NodeOnCorner': w('CNkn', 1, nPtr(c.node)); break;
     case 'EdgesSameStrain': w('CNes', 2, ePtr(c.edge1), ePtr(c.edge2)); break;
-    // Other condition types are not yet written to v4 (they don't appear in the
-    // P1 import set); they are simply omitted. Tracked with the legacy follow-up.
-    default: break;
+    case 'NodeFixed': w('CNfn', 5, nPtr(c.node), b(c.xFixed), b(c.yFixed), c.xFixValue, c.yFixValue); break;
+    case 'NodesCollinear': w('CNcn', 3, nPtr(c.node1), nPtr(c.node2), nPtr(c.node3)); break;
+    case 'EdgeLengthFixed': w('CNfe', 1, ePtr(c.edge)); break;
+    case 'PathAngleFixed': w('CNfp', 3, nPtr(c.node1), nPtr(c.node2), c.angle); break;
+    case 'PathAngleQuant': w('CNqp', 4, nPtr(c.node1), nPtr(c.node2), c.quant, c.quantOffset); break;
   }
 }
