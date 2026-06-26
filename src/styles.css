@@ -1,0 +1,53 @@
+:root {
+  --tm-paper: #fffdf7;
+  --tm-paper-edge: #333;
+  --tm-edge: #1a5fb4;
+  --tm-node: #1a1a1a;
+  --tm-leaf: #c01c28;
+  --tm-sub: #888;
+  --tm-selected: #e66100;
+  --tm-active: #2ec27e;
+  --tm-feasible: #f5c211;
+  --tm-infeasible: #c01c28;
+  --tm-sym: #9141ac;
+  --tm-bg: #e8e8e8;
+  --tm-panel: #f6f6f6;
+  --tm-border: #ccc;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; margin: 0; }
+body { font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
+
+#app { display: grid; grid-template-columns: 1fr 260px; grid-template-rows: auto 1fr auto; height: 100%; }
+.tm-toolbar { grid-column: 1 / 3; display: flex; gap: 6px; align-items: center; padding: 6px 10px; background: var(--tm-panel); border-bottom: 1px solid var(--tm-border); }
+.tm-toolbar button { font: inherit; padding: 3px 8px; }
+.tm-canvas-host { position: relative; background: var(--tm-bg); overflow: hidden; }
+.tm-sidebar { background: var(--tm-panel); border-left: 1px solid var(--tm-border); overflow: auto; padding: 8px; }
+.tm-statusbar { grid-column: 1 / 3; padding: 4px 10px; background: var(--tm-panel); border-top: 1px solid var(--tm-border); font-size: 12px; color: #444; }
+
+.tm-design { display: block; }
+.tm-design:focus { outline: none; }
+
+.tm-paper { fill: var(--tm-paper); stroke: var(--tm-paper-edge); stroke-width: 1.5; }
+.tm-symline { stroke: var(--tm-sym); stroke-width: 1; stroke-dasharray: 6 4; }
+
+.tm-edge { stroke: var(--tm-edge); stroke-width: 2.5; stroke-linecap: round; cursor: pointer; }
+.tm-edge.tm-selected { stroke: var(--tm-selected); stroke-width: 4; }
+
+.tm-path { stroke-width: 1.5; opacity: 0.7; pointer-events: stroke; }
+.tm-path-active { stroke: var(--tm-active); }
+.tm-path-feasible { stroke: var(--tm-feasible); }
+.tm-path-infeasible { stroke: var(--tm-infeasible); stroke-dasharray: 4 3; }
+
+.tm-node { fill: var(--tm-node); stroke: #fff; stroke-width: 1; cursor: pointer; }
+.tm-node.tm-leaf { fill: var(--tm-leaf); }
+.tm-node.tm-sub { fill: var(--tm-sub); }
+.tm-node.tm-selected { stroke: var(--tm-selected); stroke-width: 3; }
+
+.tm-condition { fill: var(--tm-sym); stroke: #fff; stroke-width: 0.5; cursor: pointer; }
+.tm-condition.tm-infeasible { fill: var(--tm-infeasible); }
+
+.tm-label { fill: #333; font-size: 11px; pointer-events: none; }
+.tm-edge-label { fill: var(--tm-edge); text-anchor: middle; }
