@@ -26,10 +26,12 @@ implementation.**
 
 What was done:
 1. Cloned upstream TreeMaker into `Orig/` from `github.com/bugfolder/treemaker`
-   (C++/wxWidgets, ~70k LOC: `tmModel` ~49k GUI-free + `tmwxGUI` ~21k).
+   (C++/wxWidgets, ~70k LOC: `tmModel` ~49k GUI-free + `tmwxGUI` ~21k). Nested
+   `.git` stripped, vendored in-repo; provenance in `Orig/PROVENANCE.md`.
 2. Ran four parallel analysis agents over: (a) core data model & algorithms,
    (b) optimizers/solvers/NLCO, (c) file I/O & conditions, (d) GUI &
-   interactions. Reconciled findings into `DESIGN.md`.
+   interactions. **Long-form reports saved under `docs/analysis/`** (01–04);
+   distilled into `DESIGN.md`.
 3. Read `test/tmModelTester` directly — confirms the model builds/runs **headless**
    (clean model/GUI seam) and provides **golden oracles** (`tmModelTester.out.txt`,
    five `.tmd5` inputs).

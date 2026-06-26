@@ -8,6 +8,10 @@ C++/wxWidgets source is vendored under `Orig/` (cloned from
 `github.com/bugfolder/treemaker`). All file references below are relative to
 `Orig/Source/`.
 
+> **Detailed reference:** this file is the distilled design. The long-form
+> subsystem analyses (with exact `file:function` and line citations) live in
+> [`docs/analysis/`](docs/analysis/README.md) — read those when implementing.
+
 > Status: **analysis complete, design decided, awaiting go for implementation.**
 > The §9 decisions are locked (engine = hybrid with solver+geometry in Wasm;
 > scope = phased MVP, viewer/editor first; rendering = pure SVG; native format =
