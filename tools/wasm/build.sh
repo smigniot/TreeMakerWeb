@@ -71,7 +71,7 @@ if [ "${DEBUG:-0}" = "1" ]; then
 fi
 
 echo "Compiling ${#SOURCES[@]} sources to WebAssembly…"
-emcc -std=c++14 "${OPT[@]}" -fexceptions \
+emcc -std=c++14 "${OPT[@]}" -fwasm-exceptions \
   "${INCLUDES[@]}" "${SOURCES[@]}" \
   -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createTmEngine \
   -sENVIRONMENT=web,worker,node \
@@ -81,7 +81,7 @@ emcc -std=c++14 "${OPT[@]}" -fexceptions \
   `# state vectors for large trees (~33 nodes) overflow the tiny default stack,` \
   `# corrupting adjacent memory — the root cause of the prior nondeterminism.` \
   ${DEBUG_FLAGS[@]+"${DEBUG_FLAGS[@]}"} \
-  -sEXPORTED_FUNCTIONS=_tmOptimize,_malloc,_free \
+  -sEXPORTED_FUNCTIONS=_tmOptimize,_tmBuildCreasePattern,_tmOptimizeAndBuildCP,_tmSpecBuildCP,_malloc,_free \
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString \
   -o "$OUT/tmengine.js"
 

@@ -15,6 +15,7 @@ const LABELS: Record<keyof ViewSettings, string> = {
   showEdgeLengths: 'Edge lengths',
   showPaths: 'Leaf paths',
   showConditions: 'Conditions',
+  showCreasePattern: 'Crease pattern',
 };
 
 const PRESETS: Record<string, Partial<ViewSettings>> = {

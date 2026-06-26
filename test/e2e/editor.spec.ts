@@ -60,6 +60,22 @@ test.describe('TreeMakerWeb editor', () => {
     await expect(scaleInput).toHaveValue('0.1');
   });
 
+  test('Build Crease Pattern renders mountain/valley creases', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    await page.getByRole('button', { name: 'Build Crease Pattern' }).click();
+
+    await expect(page.locator('.tm-statusbar')).toContainText('creases', { timeout: 15000 });
+    // creases rendered, including both mountain and valley folds
+    await expect(page.locator('.tm-crease')).not.toHaveCount(0);
+    await expect(page.locator('.tm-crease.tm-mountain').first()).toBeVisible();
+    await expect(page.locator('.tm-crease.tm-valley').first()).toBeVisible();
+
+    // Kill CP removes the overlay.
+    await page.getByRole('button', { name: 'Kill CP' }).click();
+    await expect(page.locator('.tm-crease')).toHaveCount(0);
+  });
+
   test('opens a legacy .tmd5 file', async ({ page }) => {
     await page.goto('/');
     const [chooser] = await Promise.all([

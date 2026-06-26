@@ -13,6 +13,7 @@ export interface ViewSettings {
   showEdgeLengths: boolean;
   showPaths: boolean; // leaf paths, colored by feasibility
   showConditions: boolean;
+  showCreasePattern: boolean; // mountain/valley creases overlay
 }
 
 export function defaultViewSettings(): ViewSettings {
@@ -26,5 +27,6 @@ export function defaultViewSettings(): ViewSettings {
     showEdgeLengths: false,
     showPaths: false,
     showConditions: true,
+    showCreasePattern: true,
   };
 }

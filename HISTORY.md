@@ -5,6 +5,43 @@ Newest entry first.
 
 ---
 
+## Session 5 — P3 crease-pattern generation (full pipeline working)
+
+**State at end:** the **complete TreeMaker pipeline runs in the browser** — tree →
+pack → crease pattern. Click **Build Crease Pattern** and the 4-flap sample
+produces a full CP (16 creases, 8 facets) rendered as mountain (red) / valley
+(blue) folds; **Kill CP** clears it; a view toggle shows/hides it. 45 unit + 6
+e2e green; typecheck + build clean.
+
+**Engine:** the CP code (`BuildPolysAndCreasePattern`, molecule construction,
+facet ordering) was already in the Wasm module; exposed via the wrapper.
+
+**Two real bugs solved on the way (both documented):**
+1. **`-fexceptions` → `-fwasm-exceptions`.** The recursive molecule builder
+   routed every call through JS `invoke_*` trampolines and overflowed the JS
+   stack. Native wasm exceptions fixed it (and shrank the module).
+2. **Serialization fidelity.** Feeding the CP builder via a hand-written v4
+   export failed: `CleanupAfterEdit` asserts a tree owns exactly C(n,2) paths and
+   does NOT rebuild the densely cross-linked derived structure (per-node
+   `mLeafPaths`, etc.) on load. Rather than perfectly reproduce that by hand, the
+   robust fix is a new **spec builder**: pass only AUTHORITATIVE data (node
+   positions + edge topology) as a compact whitespace format (`io/spec.ts`), and
+   reconstruct the tree natively in C++ via `AddNode` (`tmSpecBuildCP`), which
+   maintains all derived structure correctly. Then optimize + build CP in one
+   pass. Verified: a native `cptest` (tools/oracle/cptest.cpp) matches.
+
+**Files:** `src/wasm/tmwasm.cpp` (+`tmSpecBuildCP`, `tmBuildCreasePattern`,
+`tmOptimizeAndBuildCP`), `src/io/spec.ts`, `src/ui/creasePattern.ts`, CP render
+layer in `designView.ts`, Build/Kill commands in `main.ts`.
+
+**Deferred (tracked):** conditions are not yet applied by the spec builder (#new)
+— fine for unconstrained bases; constrained designs (symmetry/pinning) need them
+for an exact pack. Plus #20 (Web Worker), #14 (legacy v5/v3).
+
+**Next:** apply conditions in the spec builder; folded-form view; export (SVG/PDF).
+
+---
+
 ## Session 4 — Optimizer memory bug FIXED (root cause: Wasm stack size)
 
 **State at end:** the prior P2 "known issue" is resolved. A native ASan+UBSan

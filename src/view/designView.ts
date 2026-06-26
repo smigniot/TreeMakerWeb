@@ -28,8 +28,11 @@ export class DesignView {
   readonly selection: Selection;
   settings: ViewSettings;
 
+  /** The current crease pattern overlay, or null. Set via setCreasePattern. */
+  creasePattern: import('../wasm/engine').CreasePatternResult | null = null;
+
   private svg: SVGSVGElement;
-  private layers: Record<'paper' | 'paths' | 'edges' | 'nodes' | 'conditions' | 'labels', SVGGElement>;
+  private layers: Record<'paper' | 'creases' | 'paths' | 'edges' | 'nodes' | 'conditions' | 'labels', SVGGElement>;
   private xf: ViewTransform;
   private drag: DragState | null = null;
   private disposers: Array<() => void> = [];
@@ -53,6 +56,7 @@ export class DesignView {
     this.svg.setAttribute('tabindex', '0');
     this.layers = {
       paper: svgEl('g', { class: 'tm-layer-paper' }),
+      creases: svgEl('g', { class: 'tm-layer-creases' }),
       paths: svgEl('g', { class: 'tm-layer-paths' }),
       edges: svgEl('g', { class: 'tm-layer-edges' }),
       nodes: svgEl('g', { class: 'tm-layer-nodes' }),
@@ -95,9 +99,17 @@ export class DesignView {
   }
 
   // --------------------------------------------------------------- rendering
+  /** Set (or clear) the crease-pattern overlay and re-render. */
+  setCreasePattern(cp: import('../wasm/engine').CreasePatternResult | null): void {
+    this.creasePattern = cp;
+    this.settings.showCreasePattern = !!cp;
+    this.render();
+  }
+
   render(): void {
     for (const g of Object.values(this.layers)) g.replaceChildren();
     this.renderPaper();
+    if (this.settings.showCreasePattern) this.renderCreasePattern();
     if (this.settings.showPaths) this.renderPaths();
     if (this.settings.showEdges) this.renderEdges();
     if (this.settings.showNodes) this.renderNodes();
@@ -122,6 +134,24 @@ export class DesignView {
       this.layers.paper.appendChild(
         svgEl('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, class: 'tm-symline' }),
       );
+    }
+  }
+
+  private renderCreasePattern(): void {
+    const cp = this.creasePattern;
+    if (!cp) return;
+    const vloc = new Map(cp.vertices.map((v) => [v.i, this.xf.toScreen({ x: v.x, y: v.y })]));
+    // Fold class: 1 = mountain, 2 = valley, 3 = border, 0 = flat/unassigned.
+    const foldClass = ['tm-flat', 'tm-mountain', 'tm-valley', 'tm-border'];
+    for (const c of cp.creases) {
+      const a = vloc.get(c.a);
+      const b = vloc.get(c.b);
+      if (!a || !b) continue;
+      const line = svgEl('line', {
+        x1: a.x, y1: a.y, x2: b.x, y2: b.y,
+        class: `tm-crease ${foldClass[c.f] ?? 'tm-flat'}`,
+      });
+      this.layers.creases.appendChild(line);
     }
   }
 

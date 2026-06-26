@@ -354,7 +354,15 @@ browser via Wasm** (Emscripten `-O2` build, TS↔v4 bridge, Scale Everything /
 Minimize Strain commands). The early nondeterminism on large packings was a Wasm
 **stack-size** bug (64 KB default vs. the ALM Hessian's working set), fixed with
 `-sSTACK_SIZE=5 MB`; all 5 golden cases now pass deterministically to ~6 digits.
-44 unit + 5 e2e green. Next: P3 (crease pattern). See `HISTORY.md`.
+and P3 ✅ — the **full pipeline runs in the browser**: tree → pack → **crease
+pattern** (Build Crease Pattern renders mountain/valley folds; 4-flap base → full
+CP, 16 creases/8 facets). The CP builder is fed via a native **spec builder**
+(`tmSpecBuildCP`): pass authoritative node/edge data, reconstruct the tree in C++
+via `AddNode` (which maintains the cross-linked derived structure), then optimize
++ build — avoiding hand-serialization of derived data. Required switching to
+`-fwasm-exceptions` (deep recursive molecule builder). 45 unit + 6 e2e green.
+Deferred: conditions in the spec builder; folded-form view; export. See
+`HISTORY.md`.
 
 ---
 

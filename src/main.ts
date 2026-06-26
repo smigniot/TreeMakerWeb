@@ -10,6 +10,7 @@ import { Inspector } from './ui/inspector';
 import { ViewSettingsPanel } from './ui/viewSettingsPanel';
 import { openFileDialog, saveJson } from './ui/files';
 import { optimizeTree, OptimizeMode } from './ui/optimize';
+import { buildTreeCreasePattern, cpStatusMessage } from './ui/creasePattern';
 
 export interface App {
   tree: Tree;
@@ -74,9 +75,38 @@ export function mount(root: HTMLElement): App {
   const strainBtn = button('Minimize Strain', () => void runOptimize('Minimize strain', OptimizeMode.Strain));
   optimizeButtons.push(scaleBtn, strainBtn);
 
+  // --- crease pattern ---
+  const buildBtn = button('Build Crease Pattern', async () => {
+    optimizeButtons.forEach((b) => (b.disabled = true));
+    buildBtn.disabled = true;
+    status.textContent = 'Building crease pattern…';
+    try {
+      const cp = await buildTreeCreasePattern(tree);
+      if (!cp.ok) { status.textContent = `Build failed: ${cp.error ?? 'unknown'}`; return; }
+      // Apply the optimized packing (scale + node positions, spec order) so the
+      // tree matches the crease pattern; one undoable edit.
+      tree.edit(() => {
+        if (cp.scale) tree.setScale(cp.scale);
+        const nodes = tree.nodeList();
+        for (const rn of cp.nodes ?? []) { const n = nodes[rn.i]; if (n) tree.moveNode(n.id, { x: rn.x, y: rn.y }); }
+      });
+      undo.record('Build crease pattern');
+      refreshUndo();
+      view.setCreasePattern(cp);
+      status.textContent = `Crease pattern: ${cpStatusMessage(cp.status)} · ${cp.creases.length} creases, ${cp.facets.length} facets`;
+    } catch (err) {
+      status.textContent = `Build failed: ${(err as Error).message}`;
+    } finally {
+      optimizeButtons.forEach((b) => (b.disabled = false));
+      buildBtn.disabled = false;
+    }
+  });
+  const killBtn = button('Kill CP', () => { view.setCreasePattern(null); });
+
   toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
     sep(), scaleBtn, strainBtn,
+    sep(), buildBtn, killBtn,
     hint('click empty: add node · drag: move · Delete: remove'));
 
   // --- status bar ---
@@ -86,6 +116,9 @@ export function mount(root: HTMLElement): App {
       `${tree.conditionList().length} conditions · ${tree.isFeasible ? 'feasible' : 'INFEASIBLE'}`;
   };
   tree.onChange(updateStatus);
+  // A crease pattern is stale once the tree changes; the Build command re-sets it
+  // after its own edit, so it survives.
+  tree.onChange(() => { if (view.creasePattern) view.setCreasePattern(null); });
   updateStatus();
   refreshUndo();
 

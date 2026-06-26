@@ -36,6 +36,13 @@ body { font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
 .tm-edge { stroke: var(--tm-edge); stroke-width: 2.5; stroke-linecap: round; cursor: pointer; }
 .tm-edge.tm-selected { stroke: var(--tm-selected); stroke-width: 4; }
 
+/* crease pattern (mountain = red, valley = blue, per origami convention) */
+.tm-crease { stroke-width: 1; fill: none; }
+.tm-crease.tm-mountain { stroke: #c01c28; }
+.tm-crease.tm-valley { stroke: #1a5fb4; stroke-dasharray: 5 3; }
+.tm-crease.tm-border { stroke: #333; stroke-width: 1.2; }
+.tm-crease.tm-flat { stroke: #bbb; }
+
 .tm-path { stroke-width: 1.5; opacity: 0.7; pointer-events: stroke; }
 .tm-path-active { stroke: var(--tm-active); }
 .tm-path-feasible { stroke: var(--tm-feasible); }
