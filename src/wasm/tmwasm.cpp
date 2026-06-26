@@ -380,15 +380,21 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
   return r;
 }
 
-// Build a tree from a spec, optimize, build the crease pattern, and return the
-// document serialized in TreeMaker 5.0 format (PutSelf). Useful for round-trip
-// testing of the v5 reader and as the basis for legacy export.
+// Build a tree from a spec and return the document serialized in TreeMaker 5.0
+// format (PutSelf), so desktop TreeMaker can open files saved from the web port.
+// mode >= 0 optimizes first (used by tests to produce a full crease pattern);
+// mode < 0 exports the tree as-is (the app's path — the positions are already
+// the user's optimized packing, so we never move their nodes). Either way the
+// crease pattern is built if the packing allows, else only the tree is written.
 extern "C" char* tmExportV5(const char* spec, int mode) {
   ensureInit();
   istringstream is(spec);
   std::vector<tmNode*> tmNodes;
   tmTree* t = buildTreeFromSpec(is, tmNodes);
-  try { runOptimize(t, mode); t->BuildPolysAndCreasePattern(); } catch (...) { /* still serialize */ }
+  try {
+    if (mode >= 0) runOptimize(t, mode);
+    t->BuildPolysAndCreasePattern();
+  } catch (...) { /* still serialize the tree */ }
   ostringstream os;
   t->PutSelf(os);
   char* r = dupString(os.str());

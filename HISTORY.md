@@ -5,6 +5,27 @@ Newest entry first.
 
 ---
 
+## Session 11 — Legacy v5 export (desktop opens our files)
+
+**State at end:** an **Export .tmd5** toolbar button saves the current design as a
+TreeMaker 5.0 document desktop TreeMaker can open. Because the export goes
+through the actual C++ `PutSelf` (compiled to Wasm), the output is byte-identical
+to what desktop writes — compatibility is guaranteed by construction. 54 unit +
+8 e2e green.
+
+- `tmExportV5(spec, mode)` now exports the tree as-is when `mode < 0` (no
+  re-optimize — the positions are already the user's design); `mode >= 0`
+  optimizes (used by tests to produce a full crease pattern).
+- `exportV5` added to engine + worker + workerClient; `ui/legacyExport.ts`
+  `exportTreeV5(tree)` = writeSpec → exportV5(-1). Button downloads `design.tmd5`.
+- Tests: export round-trips through our own v5 reader (nodes/edges/conditions);
+  e2e captures the download and checks the `tree / 5.0` header.
+
+**Next (open follow-ups):** v3 import; optimize progress/cancel; `.fold`/PDF
+export.
+
+---
+
 ## Session 10 — v5 import (desktop TreeMaker 5 files open)
 
 **State at end:** the Open dialog now reads **v5.0** documents (what desktop

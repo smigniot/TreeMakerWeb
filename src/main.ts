@@ -12,6 +12,7 @@ import { openFileDialog, saveJson, downloadText } from './ui/files';
 import { creasePatternToSvg } from './io/svgExport';
 import { optimizeTree, OptimizeMode } from './ui/optimize';
 import { buildTreeCreasePattern, cpStatusMessage } from './ui/creasePattern';
+import { exportTreeV5 } from './ui/legacyExport';
 import { FoldedFormView } from './view/foldedFormView';
 
 export interface App {
@@ -61,6 +62,19 @@ export function mount(root: HTMLElement): App {
     if (loaded) { tree.loadState(loaded.toState()); reload(); }
   });
   const saveBtn = button('Save', () => saveJson(tree));
+  const exportTmBtn = button('Export .tmd5', async () => {
+    if (tree.nodes.size === 0) { status.textContent = 'Nothing to export.'; return; }
+    exportTmBtn.disabled = true;
+    status.textContent = 'Exporting TreeMaker 5 file…';
+    try {
+      downloadText(await exportTreeV5(tree), 'design.tmd5', 'text/plain');
+      status.textContent = 'Exported design.tmd5 (opens in desktop TreeMaker 5).';
+    } catch (err) {
+      status.textContent = `Export failed: ${(err as Error).message}`;
+    } finally {
+      exportTmBtn.disabled = false;
+    }
+  });
   const sampleBtn = button('Sample', () => { loadSample(tree); reload(); });
 
   // --- optimizer commands ---
@@ -116,7 +130,7 @@ export function mount(root: HTMLElement): App {
     downloadText(creasePatternToSvg(view.creasePattern, tree.paper), 'crease-pattern.svg', 'image/svg+xml');
   });
 
-  toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
+  toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, exportTmBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
     sep(), scaleBtn, strainBtn,
     sep(), buildBtn, killBtn, exportSvgBtn,

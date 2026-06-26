@@ -53,3 +53,8 @@ export function specBuildCreasePattern(spec: string, mode: OptimizeMode): Promis
   if (!hasWorker) return direct.specBuildCreasePattern(spec, mode);
   return call<CreasePatternResult>({ kind: 'specBuildCP', spec, mode });
 }
+
+export function exportV5(spec: string, mode: number): Promise<string> {
+  if (!hasWorker) return direct.exportV5(spec, mode);
+  return call<string>({ kind: 'exportV5', spec, mode });
+}

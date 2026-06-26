@@ -102,6 +102,26 @@ test.describe('TreeMakerWeb editor', () => {
     expect(svg).toContain('<line ');
   });
 
+  test('exports a .tmd5 desktop TreeMaker can open', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    await page.getByRole('button', { name: 'Scale Everything' }).click();
+    await expect(page.locator('.tm-statusbar')).toContainText('feasible', { timeout: 15000 });
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export .tmd5' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('design.tmd5');
+    const stream = await download.createReadStream();
+    const text = await new Promise<string>((resolve) => {
+      let s = '';
+      stream.on('data', (c) => (s += c));
+      stream.on('end', () => resolve(s));
+    });
+    expect(text.startsWith('tree\n5.0\n')).toBe(true);
+  });
+
   test('opens a legacy .tmd5 file', async ({ page }) => {
     await page.goto('/');
     const [chooser] = await Promise.all([

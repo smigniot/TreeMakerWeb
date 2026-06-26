@@ -100,6 +100,18 @@ export async function specBuildCreasePattern(spec: string, mode: OptimizeMode): 
   return JSON.parse(json) as CreasePatternResult;
 }
 
+/**
+ * Serialize a tree (from the authoritative spec) to TreeMaker 5.0 text, so
+ * desktop TreeMaker can open it. mode < 0 exports the tree as-is (no re-optimize).
+ */
+export async function exportV5(spec: string, mode: number): Promise<string> {
+  const M = await getModule();
+  const ptr = M.ccall('tmExportV5', 'number', ['string', 'number'], [spec, mode]);
+  const text = M.UTF8ToString(ptr);
+  M._free(ptr);
+  return text;
+}
+
 /** Stiffness-weighted RMS strain as a percentage (matches the tester's metric). */
 export function rmsStrainPercent(edges: OptimizeResult['edges']): number {
   if (!edges.length) return 0;

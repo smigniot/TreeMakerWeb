@@ -3,7 +3,8 @@
 //
 // Supported: v4.0 (TM4 / the bundled fixtures) and v5.0 (the format desktop
 // TreeMaker 5 saves — full crease pattern; we extract the authoritative tree and
-// regenerate the rest). v3.0 import and legacy *export* are tracked follow-ups.
+// regenerate the rest). v5 *export* lives in ui/legacyExport.ts (via the C++
+// PutSelf). v3.0 import is a tracked follow-up.
 
 import { Cursor } from './cursor';
 import { readV4 } from './readV4';
