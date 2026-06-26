@@ -347,6 +347,11 @@ facets with kinds, folds, and layer order) — never raw pointers.
   Crease Pattern command; crease/facet rendering; folded-form view.
 - **P4 — Polish:** export (SVG/PNG/PDF), docs, remaining conditions, edge cases.
 
+**Progress:** P0 ✅ (scaffold + native oracle harness) and P1 ✅ (TS model, JSON +
+legacy-v4 import, pure-SVG surface, inspector/view-settings/undo, file open/save;
+37 unit tests + 4 Playwright e2e green). Next: P2 (Wasm ALM optimizer). See
+`HISTORY.md` for the running log.
+
 ---
 
 ## 9. Decisions & remaining confirmations

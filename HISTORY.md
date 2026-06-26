@@ -5,6 +5,40 @@ Newest entry first.
 
 ---
 
+## Session 2 — P0 scaffold + P1 viewer/editor (complete)
+
+**State at end:** a working **browser viewer/editor** (no solver yet). `npm run
+dev` to run; `npm test` (37 unit/integration, green) and `npm run test:e2e`
+(4 Playwright, green) to verify; `npm run oracle` rebuilds the native golden
+baseline. Decisions from Session 1 are implemented as planned.
+
+**P0 — scaffold + oracle harness:**
+- Vite + TypeScript (strict) + Vitest (jsdom) + Playwright. Bootable shell.
+- `tools/oracle/` builds the native GUI-free ALM tester from `Orig/` and emits
+  `oracle.out.txt` + `baseline.json` (the P2 regression baseline). `Orig/` stays
+  pristine — fixes applied to a `build/` copy (documented modern-clang patches,
+  reusable for the P2 Emscripten build). Finding: simple cases reproduce to ~6
+  digits; complex non-convex cases drift across compiler/platform.
+
+**P1 — viewer/editor (pure TS, no Wasm):**
+- `src/model/`: ID-based model (no dpptr), Tree with depth-counted edit scopes,
+  leaf-path derivation (BFS), feasibility, conditions + function-only feasibility.
+- `src/io/`: native **JSON** (source of truth + undo snapshots) + legacy **v4.0**
+  `.tmd5` import, verified against the real fixtures (field orders read from the
+  C++ source, incl. the edge no-owner-ptr quirk).
+- `src/view/`: **pure-SVG** design surface — y-flipped transform, layered render,
+  click-to-add / select / drag / delete, data-attribute hit-testing.
+- `src/ui/`: snapshot **undo/redo**, context **inspector**, **view-settings**
+  panel + presets, file **open** (JSON or legacy) / **save** (JSON).
+- `main.ts`: toolbar, status bar, keyboard shortcuts. Visually verified.
+
+**Deferred (tracked):** legacy v5/v3 import + legacy export (task — see below).
+
+**Next session:** P2 — compile the ALM optimizer + constraint fns to Wasm in a
+Web Worker; wire Scale/Edge/Strain commands; assert the golden numeric baseline.
+
+---
+
 ## Session 1 — Analysis phase (complete)
 
 **State at end:** repo contains `PLAN.md`, `DESIGN.md` (new), `HISTORY.md`
