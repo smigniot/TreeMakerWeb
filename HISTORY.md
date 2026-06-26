@@ -5,6 +5,42 @@ Newest entry first.
 
 ---
 
+## Session 13 — README + pause checkpoint
+
+**Status: paused, in a clean, publishable state.** Working tree committed; ready
+to push to GitHub.
+
+**What the app does today (all working, all tested):** open desktop `.tmd5` (v4 &
+v5) or native JSON → edit the tree (add/drag/delete nodes, conditions) → pack
+(Scale Everything / Minimize Strain) → Build Crease Pattern → folded‑form preview
+→ export `.tmd5` (back to desktop), SVG, or `.fold`. Solves run in a Web Worker.
+**57 unit + 9 e2e green; typecheck + build clean.**
+
+- Added `README.md` (presentation, dev run, **production hosting**).
+- `vite.config.ts` `base: './'` → `dist/` is portable to a domain root OR any
+  subfolder (GitHub Pages) with no config; verified by serving from a subpath
+  (`/treemaker/`) — loads, builds a crease pattern, zero console errors.
+- Frictionless hosting confirmed: single‑threaded wasm + normal Worker ⇒ **no
+  COOP/COEP / cross‑origin isolation needed**; any static server works.
+
+**How to resume (cold start):**
+1. Read `README.md` (overview), this file (log), `DESIGN.md` (architecture),
+   `docs/analysis/` (deep C++ reference).
+2. `npm install && npm run dev`. The compiled wasm is committed, so no C++
+   toolchain is needed to run. Rebuild wasm only if touching `src/wasm/tmwasm.cpp`
+   or `Orig/`: `source ~/emsdk/emsdk_env.sh && bash tools/wasm/build.sh`
+   (Emscripten installed at `~/emsdk`).
+3. `npm test` / `npm run test:e2e` to confirm green.
+
+**Open follow‑ups (all optional, none blocking):**
+- #14 legacy v3 import (rare TM3 files).
+- Optimizer **progress/cancel** (terminate + respawn the worker).
+- **PDF** export of the crease pattern.
+- Inspector: add condition‑creation UI (conditions can be imported/built but the
+  P1 inspector doesn't yet create them from the UI).
+
+---
+
 ## Session 12 — FOLD (.fold) export
 
 **State at end:** an **Export .fold** toolbar button saves the crease pattern in

@@ -5,6 +5,9 @@ import { defineConfig } from 'vitest/config';
 // part of the build. Tests live alongside source (*.test.ts) and under test/.
 export default defineConfig({
   root: '.',
+  // Relative base so the built dist/ works whether served from a domain root or
+  // any subfolder (GitHub Pages, a sub-path on a static host) with no config.
+  base: './',
   build: {
     outDir: 'dist',
     sourcemap: true,
