@@ -5,6 +5,23 @@ Newest entry first.
 
 ---
 
+## Session 8 — Crease-pattern SVG export
+
+**State at end:** an **Export SVG** toolbar button downloads the current crease
+pattern as a standalone SVG (paper outline + creases coloured by fold: mountain
+red solid, valley blue dashed, border black). Opens in any browser / Illustrator
+/ Inkscape. 49 unit + 7 e2e green.
+
+- `src/io/svgExport.ts` `creasePatternToSvg(cp, paper)` — pure string generation,
+  y-flipped to SVG coords, inline styles; optional facet outlines. Unit-tested.
+- `downloadText()` helper in `ui/files.ts` (saveJson now uses it); button wired
+  in `main.ts` (exports `view.creasePattern`, prompts to build first if absent).
+- e2e captures the download and checks it is valid SVG.
+
+**Next:** #20 (Web Worker), #14 (legacy v5/v3 import + export), or PDF/FOLD export.
+
+---
+
 ## Session 7 — Folded-form view
 
 **State at end:** a "Folded form" panel in the sidebar previews the folded base

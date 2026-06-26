@@ -8,7 +8,8 @@ import { DesignView } from './view/designView';
 import { UndoManager } from './ui/undo';
 import { Inspector } from './ui/inspector';
 import { ViewSettingsPanel } from './ui/viewSettingsPanel';
-import { openFileDialog, saveJson } from './ui/files';
+import { openFileDialog, saveJson, downloadText } from './ui/files';
+import { creasePatternToSvg } from './io/svgExport';
 import { optimizeTree, OptimizeMode } from './ui/optimize';
 import { buildTreeCreasePattern, cpStatusMessage } from './ui/creasePattern';
 import { FoldedFormView } from './view/foldedFormView';
@@ -110,11 +111,15 @@ export function mount(root: HTMLElement): App {
     }
   });
   const killBtn = button('Kill CP', () => { view.setCreasePattern(null); folded.setCreasePattern(null); });
+  const exportSvgBtn = button('Export SVG', () => {
+    if (!view.creasePattern) { status.textContent = 'Build the crease pattern first, then Export SVG.'; return; }
+    downloadText(creasePatternToSvg(view.creasePattern, tree.paper), 'crease-pattern.svg', 'image/svg+xml');
+  });
 
   toolbar.append(strong('TreeMakerWeb'), newBtn, openBtn, saveBtn, sampleBtn,
     sep(), undoBtn, redoBtn,
     sep(), scaleBtn, strainBtn,
-    sep(), buildBtn, killBtn,
+    sep(), buildBtn, killBtn, exportSvgBtn,
     hint('click empty: add node · drag: move · Delete: remove'));
 
   // --- status bar ---

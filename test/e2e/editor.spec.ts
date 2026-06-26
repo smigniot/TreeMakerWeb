@@ -80,6 +80,28 @@ test.describe('TreeMakerWeb editor', () => {
     await expect(page.locator('.tm-folded .tm-folded-facet')).toHaveCount(0);
   });
 
+  test('exports the crease pattern as SVG', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    await page.getByRole('button', { name: 'Build Crease Pattern' }).click();
+    await expect(page.locator('.tm-crease')).not.toHaveCount(0);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export SVG' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('crease-pattern.svg');
+
+    const stream = await download.createReadStream();
+    const svg = await new Promise<string>((resolve) => {
+      let s = '';
+      stream.on('data', (c) => (s += c));
+      stream.on('end', () => resolve(s));
+    });
+    expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('<line ');
+  });
+
   test('opens a legacy .tmd5 file', async ({ page }) => {
     await page.goto('/');
     const [chooser] = await Promise.all([
