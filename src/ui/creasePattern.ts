@@ -5,7 +5,8 @@
 
 import type { Tree } from '../model/tree';
 import { writeSpec } from '../io/spec';
-import { specBuildCreasePattern, OptimizeMode, type CreasePatternResult } from '../wasm/engine';
+import { OptimizeMode, type CreasePatternResult } from '../wasm/engine';
+import { specBuildCreasePattern } from '../wasm/workerClient';
 
 export type { CreasePatternResult };
 export { CPStatus, CreaseKind, CreaseFold, OptimizeMode } from '../wasm/engine';

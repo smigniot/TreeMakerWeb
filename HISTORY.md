@@ -5,6 +5,25 @@ Newest entry first.
 
 ---
 
+## Session 9 — Optimizer/CP builder moved to a Web Worker
+
+**State at end:** heavy solves (Scale/Edge/Strain optimize, Build Crease Pattern)
+now run in a Web Worker, so the UI stays responsive. 49 unit + 7 e2e green;
+the wasm now loads only in the worker realm (separate Vite chunk). Task #20 done.
+
+- `src/wasm/worker.ts`: dedicated module worker; loads the engine, handles
+  request/response messages (correlated by id) for optimize / specBuildCP.
+- `src/wasm/workerClient.ts`: main-thread client (lazy worker, id→promise map);
+  **falls back to the direct engine when `Worker` is undefined** (Node/tests), so
+  unit tests are unchanged and only exercise the in-realm path.
+- `ui/optimize.ts` / `ui/creasePattern.ts` now call the worker client; e2e
+  (Scale/Build/Export) exercises the real worker end-to-end.
+
+**Next:** #14 (legacy v5/v3 import + export); optional optimize progress/cancel
+(terminate+respawn worker); `.fold`/PDF export.
+
+---
+
 ## Session 8 — Crease-pattern SVG export
 
 **State at end:** an **Export SVG** toolbar button downloads the current crease

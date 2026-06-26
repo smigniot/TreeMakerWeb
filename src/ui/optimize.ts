@@ -8,7 +8,8 @@
 
 import type { Tree } from '../model/tree';
 import { writeV4 } from '../io/legacy/writeV4';
-import { optimize, OptimizeMode, type OptimizeResult } from '../wasm/engine';
+import { OptimizeMode, type OptimizeResult } from '../wasm/engine';
+import { optimize } from '../wasm/workerClient';
 
 export { OptimizeMode };
 
