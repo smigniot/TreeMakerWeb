@@ -290,10 +290,10 @@ static void applyConditions(tmTree* t, std::vector<tmNode*>& nodes,
 //   from to length strain stiffness   (numEdges lines; from/to are node indices)
 //   numConditions
 //   <tag> <fields…>                   (per applyConditions)
-extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
-  ensureInit();
-  istringstream is(spec);
-
+// Build a tmTree from a spec stream (header, nodes, edges, conditions) via the
+// native AddNode/condition API. `tmNodes` is filled in spec order so callers can
+// map results back. The tree is NOT optimized.
+static tmTree* buildTreeFromSpec(istringstream& is, std::vector<tmNode*>& tmNodes) {
   double pw, ph, scale, symX, symY, symAngle;
   int hasSym;
   is >> pw >> ph >> scale >> hasSym >> symX >> symY >> symAngle;
@@ -319,9 +319,8 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
   t->SetPaperHeight(ph);
   if (hasSym) t->SetSymmetry(tmPoint(symX, symY), symAngle);
 
-  // Build the tree by BFS from node 0, adding each child via AddNode(parent).
-  std::vector<tmNode*> tmNodes(numNodes, nullptr);
-  std::vector<tmEdge*> tmEdges(numEdges, nullptr); // spec edge index → tmEdge*
+  tmNodes.assign(numNodes, nullptr);
+  std::vector<tmEdge*> tmEdges(numEdges, nullptr);
   if (numNodes > 0) {
     tmNode* root; tmEdge* dummy = nullptr;
     t->AddNode(nullptr, pos[0], root, dummy);
@@ -347,7 +346,16 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
     }
   }
   t->SetScale(scale);
-  applyConditions(t, tmNodes, tmEdges, is); // conditions follow edges in the spec
+  applyConditions(t, tmNodes, tmEdges, is);
+  return t;
+}
+
+extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
+  ensureInit();
+  istringstream is(spec);
+  std::vector<tmNode*> tmNodes;
+  tmTree* t = buildTreeFromSpec(is, tmNodes);
+  const size_t numNodes = tmNodes.size();
 
   const char* err = runOptimize(t, mode);
   if (!err) { try { t->BuildPolysAndCreasePattern(); } catch (...) { err = "build failed"; } }
@@ -368,6 +376,22 @@ extern "C" char* tmSpecBuildCP(const char* spec, int mode) {
   extra << "]";
 
   char* r = serializeCP(t, err, extra.str());
+  delete t;
+  return r;
+}
+
+// Build a tree from a spec, optimize, build the crease pattern, and return the
+// document serialized in TreeMaker 5.0 format (PutSelf). Useful for round-trip
+// testing of the v5 reader and as the basis for legacy export.
+extern "C" char* tmExportV5(const char* spec, int mode) {
+  ensureInit();
+  istringstream is(spec);
+  std::vector<tmNode*> tmNodes;
+  tmTree* t = buildTreeFromSpec(is, tmNodes);
+  try { runOptimize(t, mode); t->BuildPolysAndCreasePattern(); } catch (...) { /* still serialize */ }
+  ostringstream os;
+  t->PutSelf(os);
+  char* r = dupString(os.str());
   delete t;
   return r;
 }

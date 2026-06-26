@@ -1,14 +1,13 @@
 // Legacy TreeMaker file import (.tm / .tmd5). These are the original positional
-// ASCII formats (versions 3.0 / 4.0 / 5.0). They are import/export only — the
-// native format is JSON (see ../json.ts).
+// ASCII formats; the native format is JSON (see ../json.ts).
 //
-// P1 implements v4.0 import (the format of all bundled test fixtures and TM4
-// files). v5.0 (full crease pattern) and v3.0 import, and legacy export, are
-// tracked follow-ups; until then they throw an actionable error rather than
-// silently mis-parsing.
+// Supported: v4.0 (TM4 / the bundled fixtures) and v5.0 (the format desktop
+// TreeMaker 5 saves — full crease pattern; we extract the authoritative tree and
+// regenerate the rest). v3.0 import and legacy *export* are tracked follow-ups.
 
 import { Cursor } from './cursor';
 import { readV4 } from './readV4';
+import { readV5 } from './readV5';
 import { Tree } from '../../model/tree';
 import type { TreeState } from '../../model/tree';
 
@@ -24,12 +23,9 @@ export function parseLegacy(text: string): TreeState {
     case '4.0':
       return readV4(c);
     case '5.0':
-      throw new UnsupportedVersionError(
-        'TreeMaker 5.0 import is not implemented yet (P1 supports 4.0). ' +
-        'Open it in desktop TreeMaker and "Export v4", or wait for v5 support.',
-      );
+      return readV5(c);
     case '3.0':
-      throw new UnsupportedVersionError('TreeMaker 3.0 import is not implemented yet (P1 supports 4.0).');
+      throw new UnsupportedVersionError('TreeMaker 3.0 import is not implemented yet (supports 4.0 and 5.0).');
     default:
       throw new UnsupportedVersionError(`unknown TreeMaker file version "${version}"`);
   }

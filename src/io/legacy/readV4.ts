@@ -107,29 +107,35 @@ function expectTag(c: Cursor, tag: string): void {
 }
 
 /**
- * Read one v4 condition: tag, numLines, body. Known tags are mapped to model
- * conditions; unknown tags are skipped by their numLines (forward-compatible,
- * matching tmTree::Makev4Condition).
+ * Read one v4 condition: tag, numLines, body. (v5 has extra index + feasible
+ * fields before numLines — see readV5.)
  */
 function readCondition(c: Cursor, id: number): Condition | null {
   const tag = c.str();
   const numLines = c.int();
+  return parseConditionBody(c, tag, id, numLines);
+}
+
+/**
+ * Parse a condition body (the part after numLines, identical in v4 and v5).
+ * Known tags map to model conditions; unknown tags are skipped by their
+ * numLines (forward-compatible, matching tmTree::Makev4/5Condition).
+ */
+export function parseConditionBody(c: Cursor, tag: string, id: number, numLines: number): Condition | null {
   switch (tag) {
-    case 'CNpn': // NodesPaired
-      return { id, type: 'NodesPaired', tag, node1: c.ptr(), node2: c.ptr() };
-    case 'CNsn': // NodeSymmetric
-      return { id, type: 'NodeSymmetric', tag, node: c.ptr() };
-    case 'CNap': // PathActive
-      return { id, type: 'PathActive', tag, node1: c.ptr(), node2: c.ptr() };
-    case 'CNen': // NodeOnEdge
-      return { id, type: 'NodeOnEdge', tag, node: c.ptr() };
-    case 'CNkn': // NodeOnCorner
-      return { id, type: 'NodeOnCorner', tag, node: c.ptr() };
-    case 'CNes': // EdgesSameStrain
-      return { id, type: 'EdgesSameStrain', tag, edge1: c.ptr(), edge2: c.ptr() };
+    case 'CNpn': return { id, type: 'NodesPaired', tag, node1: c.ptr(), node2: c.ptr() };
+    case 'CNsn': return { id, type: 'NodeSymmetric', tag, node: c.ptr() };
+    case 'CNap': return { id, type: 'PathActive', tag, node1: c.ptr(), node2: c.ptr() };
+    case 'CNen': return { id, type: 'NodeOnEdge', tag, node: c.ptr() };
+    case 'CNkn': return { id, type: 'NodeOnCorner', tag, node: c.ptr() };
+    case 'CNes': return { id, type: 'EdgesSameStrain', tag, edge1: c.ptr(), edge2: c.ptr() };
+    case 'CNfn': return { id, type: 'NodeFixed', tag, node: c.ptr(), xFixed: c.bool(), yFixed: c.bool(), xFixValue: c.num(), yFixValue: c.num() };
+    case 'CNcn': return { id, type: 'NodesCollinear', tag, node1: c.ptr(), node2: c.ptr(), node3: c.ptr() };
+    case 'CNfe': return { id, type: 'EdgeLengthFixed', tag, edge: c.ptr() };
+    case 'CNfp': return { id, type: 'PathAngleFixed', tag, node1: c.ptr(), node2: c.ptr(), angle: c.num() };
+    case 'CNqp': return { id, type: 'PathAngleQuant', tag, node1: c.ptr(), node2: c.ptr(), quant: c.int(), quantOffset: c.num() };
     default:
-      // Unrecognized: skip its body lines, lose the condition (logged by caller).
-      c.skip(numLines);
+      c.skip(numLines); // unrecognized: drop the condition
       return null;
   }
 }

@@ -72,8 +72,8 @@ describe('legacy v4 import', () => {
     expect(t2.toState()).toEqual(t.toState());
   });
 
-  it('throws an actionable error on unsupported versions', () => {
-    const v5 = 'tree\n5.0\n1\n1\n0.1\nfalse\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0';
-    expect(() => parseLegacy(v5)).toThrow(UnsupportedVersionError);
+  it('throws an actionable error on unsupported versions (v3, unknown)', () => {
+    expect(() => parseLegacy('tree\n3.0\n')).toThrow(UnsupportedVersionError);
+    expect(() => parseLegacy('tree\n9.9\n')).toThrow(UnsupportedVersionError);
   });
 });

@@ -5,6 +5,28 @@ Newest entry first.
 
 ---
 
+## Session 10 — v5 import (desktop TreeMaker 5 files open)
+
+**State at end:** the Open dialog now reads **v5.0** documents (what desktop
+TreeMaker 5 saves), in addition to v4.0. 52 unit + 7 e2e green.
+
+- `src/io/legacy/readV5.ts`: parses the v5 header (7 status flags, 8 counts),
+  extracts the authoritative tree (nodes, edges, conditions) and **consumes/skips
+  the full crease-pattern records** (paths, polys, vertices, creases, facets) to
+  stay in sync — field orders mirror each `Putv5Self`, incl. the per-type owner-
+  pointer token counts. `numNodes` includes poly-owned inset sub-nodes; we keep
+  only tree-owned nodes (so condition node refs resolve).
+- Condition body parser extracted from readV4 and shared (now covers all 11
+  types). v5 condition envelope adds index + feasible before numLines.
+- `tmExportV5(spec, mode)` wrapper (build → optimize → build CP → `PutSelf`)
+  generates v5 docs for testing; `tmSpecBuildCP` refactored onto a shared
+  `buildTreeFromSpec`. v5 reader tested via generated full-CP docs (tree
+  extraction + JSON round-trip + rebuild-CP).
+
+**Next:** v3 import; legacy *export* (v4/v5 via PutSelf); `.fold`/PDF export.
+
+---
+
 ## Session 9 — Optimizer/CP builder moved to a Web Worker
 
 **State at end:** heavy solves (Scale/Edge/Strain optimize, Build Crease Pattern)

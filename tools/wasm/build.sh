@@ -81,7 +81,7 @@ emcc -std=c++14 "${OPT[@]}" -fwasm-exceptions \
   `# state vectors for large trees (~33 nodes) overflow the tiny default stack,` \
   `# corrupting adjacent memory — the root cause of the prior nondeterminism.` \
   ${DEBUG_FLAGS[@]+"${DEBUG_FLAGS[@]}"} \
-  -sEXPORTED_FUNCTIONS=_tmOptimize,_tmBuildCreasePattern,_tmOptimizeAndBuildCP,_tmSpecBuildCP,_malloc,_free \
+  -sEXPORTED_FUNCTIONS=_tmOptimize,_tmBuildCreasePattern,_tmOptimizeAndBuildCP,_tmSpecBuildCP,_tmExportV5,_malloc,_free \
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString \
   -o "$OUT/tmengine.js"
 
