@@ -5,6 +5,23 @@ Newest entry first.
 
 ---
 
+## Session 17 — GitHub Pages deployment setup
+
+- `dist/` is now **committed** (removed from `.gitignore`) for direct static
+  hosting; rebuild with `npm run build` and re-commit when source changes.
+- `.github/workflows/deploy-pages.yml`: builds + deploys to GitHub Pages on push
+  to `main` (also `workflow_dispatch`). CI needs no C++ toolchain (the wasm is
+  committed) — just Node. Relative base ⇒ works under `/TreeMakerWeb/`.
+- `DEPLOY.md`: checklist (one-time: Settings→Pages→Source “GitHub Actions”; per
+  deploy: push main, watch Actions, verify the live site). No tag required (the
+  workflow triggers on push to main).
+- Target site: <https://smigniot.github.io/TreeMakerWeb/> (repo:
+  github.com/smigniot/TreeMakerWeb; v1.0.0 released manually by the user).
+
+**Next:** user pushes manually; then I'll verify the live Pages site via curl.
+
+---
+
 ## Session 16 — Editable conditions + symmetry ±45° buttons
 
 **Conditions are now editable** (not just add/remove). 59 unit + 12 e2e green.

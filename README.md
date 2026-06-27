@@ -83,9 +83,16 @@ npx serve dist               # quick local check
 
 ### GitHub Pages
 
-Build, then publish the contents of `dist/` (e.g. push to a `gh-pages` branch, or
-point Pages at it). The relative base means no extra configuration is needed even
-though Pages serves under `/<repo>/`.
+This repo deploys to Pages automatically via
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) on
+every push to `main`. The relative base means no extra configuration is needed
+even though Pages serves under `/<repo>/`. See **[DEPLOY.md](DEPLOY.md)** for the
+one-time setup and a verification checklist.
+
+Live site: <https://smigniot.github.io/TreeMakerWeb/>
+
+(`dist/` is also committed, so you can serve the build directly without a build
+step on any static host.)
 
 ## Rebuilding the WebAssembly engine (optional)
 
