@@ -7,11 +7,16 @@ Deployment is automated by `.github/workflows/deploy-pages.yml`: on every push t
 `main` it builds the site and publishes it to GitHub Pages. The committed `dist/`
 is for direct/manual hosting; CI rebuilds from source so Pages is always fresh.
 
-## One-time setup (in the GitHub web UI)
+## One-time setup
 
-- [ ] **Settings → Pages → Build and deployment → Source: “GitHub Actions”.**
-      (Not “Deploy from a branch”.) This is required once; without it the deploy
-      job fails with a Pages-not-enabled error.
+The workflow sets `enablement: true`, so it **enables Pages automatically** on
+the first successful run — no manual toggle needed.
+
+- [ ] *Fallback only*, if a run still fails with
+      “Get Pages site failed … verify that the repository has Pages enabled”
+      (can happen on the very first run, or if org settings block auto‑enable):
+      **Settings → Pages → Build and deployment → Source: “GitHub Actions”**
+      (not “Deploy from a branch”), then re-run the workflow from the Actions tab.
 
 ## Each deploy
 
