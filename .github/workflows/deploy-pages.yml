@@ -31,11 +31,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # NOTE: Pages must be enabled once via Settings → Pages → Source:
+      # "GitHub Actions" (see DEPLOY.md). Auto-enable (enablement: true) is not
+      # used because the workflow token can't create the Pages site in this repo
+      # ("Resource not accessible by integration").
       - uses: actions/configure-pages@v5
-        with:
-          # Enable Pages (build type = GitHub Actions) automatically, so no
-          # manual Settings → Pages toggle is required for the first run.
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
