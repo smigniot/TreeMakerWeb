@@ -41,7 +41,8 @@ export function mount(root: HTMLElement): App {
   const tree = new Tree();
   const undo = new UndoManager(tree);
   const view = new DesignView(host, tree, { onEdit: (label) => undo.record(label) });
-  new Inspector(inspectorHost, tree, view.selection, (label) => undo.record(label));
+  new Inspector(inspectorHost, tree, view.selection, (label) => undo.record(label),
+    (kind, onPicked) => view.beginPick(kind, onPicked));
   new ViewSettingsPanel(viewHost, view);
   const folded = new FoldedFormView(foldedHost);
 

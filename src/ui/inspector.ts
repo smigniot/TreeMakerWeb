@@ -15,6 +15,8 @@ export class Inspector {
     private tree: Tree,
     private selection: Selection,
     private onEdit: (label: string) => void,
+    /** Enter canvas pick mode; the next matching part click calls onPicked. */
+    private pick: (kind: 'node' | 'edge', onPicked: (id: number) => void) => void = () => {},
   ) {
     this.disposers.push(this.tree.onChange(() => this.render()));
     this.disposers.push(this.selection.onChange(() => this.render()));
@@ -33,6 +35,20 @@ export class Inspector {
 
   private addCond(c: NewCondition): void {
     this.apply('Add condition', () => this.tree.addCondition(c));
+  }
+
+  /** Edit a condition (id stays selected). `mutate` runs on the live condition. */
+  private editCond(id: number, mutate: () => void): void {
+    this.tree.updateCondition(id, () => mutate());
+    this.onEdit('Edit condition');
+  }
+
+  /** A reference field: an id input + a "target" button to pick the part on the
+   * canvas. `onSet` receives the new (integer) part id. */
+  private refRow(label: string, kind: 'node' | 'edge', current: number, onSet: (id: number) => void): HTMLElement {
+    const input = numberInput(current, (v) => onSet(Math.trunc(v)), { step: 1 });
+    const target = actionButton('◎ pick', () => this.pick(kind, onSet), `Click a ${kind} on the canvas`);
+    return row(label, buttonGroup([input, target]));
   }
 
   render(): void {
@@ -62,6 +78,10 @@ export class Inspector {
         row('Sym X', numberInput(t.symmetry.loc.x, (v) => this.apply('Set symmetry', () => t.setSymmetry({ loc: { x: v, y: t.symmetry.loc.y } })), { step: 0.05 })),
         row('Sym Y', numberInput(t.symmetry.loc.y, (v) => this.apply('Set symmetry', () => t.setSymmetry({ loc: { x: t.symmetry.loc.x, y: v } })), { step: 0.05 })),
         row('Sym °', numberInput(t.symmetry.angle, (v) => this.apply('Set symmetry', () => t.setSymmetry({ angle: v })), { step: 5 })),
+        row('Rotate', buttonGroup([
+          actionButton('+45°', () => this.apply('Set symmetry', () => t.setSymmetry({ angle: t.symmetry.angle + 45 }))),
+          actionButton('−45°', () => this.apply('Set symmetry', () => t.setSymmetry({ angle: t.symmetry.angle - 45 }))),
+        ])),
       );
     }
 
@@ -75,10 +95,12 @@ export class Inspector {
     }
     for (const c of conds) {
       const feas = this.tree.conditionFeasible(c);
-      const label = readonlyField(`${c.type}${feas === false ? ' ✗' : ''}`);
-      if (feas === false) label.style.color = 'var(--tm-infeasible)';
+      // clicking the type selects the condition → opens its editable panel
+      const sel = actionButton(`${c.type}${feas === false ? ' ✗' : ''}`, () => this.selection.set({ kind: 'condition', id: c.id }), 'Edit this condition');
+      sel.style.flex = '1';
+      if (feas === false) sel.style.color = 'var(--tm-infeasible)';
       const rm = actionButton('✕', () => this.apply('Remove condition', () => this.tree.removeCondition(c.id)), 'Remove');
-      this.host.append(row(`#${c.id}`, buttonGroup([label, rm])));
+      this.host.append(row(`#${c.id}`, buttonGroup([sel, rm])));
     }
   }
 
@@ -123,13 +145,60 @@ export class Inspector {
   private renderCondition(id: number): void {
     const c = this.tree.conditions.get(id);
     if (!c) return this.renderTree();
-    this.host.append(heading(`Condition ${id}`));
+    this.host.append(heading(`Condition ${id}`), row('Type', readonlyField(c.type)));
+
+    // Editable fields per condition type. Each `node`/`edge` field gets an id
+    // input + a "target" button (mutating the live condition object `c`).
+    const setNode = (k: 'node' | 'node1' | 'node2' | 'node3') => (v: number) => this.editCond(id, () => { (c as Record<string, unknown>)[k] = v; });
+    const setEdge = (k: 'edge' | 'edge1' | 'edge2') => (v: number) => this.editCond(id, () => { (c as Record<string, unknown>)[k] = v; });
+    const numField = (label: string, val: number, set: (v: number) => void, step = 0.01) =>
+      this.host.append(row(label, numberInput(val, (v) => this.editCond(id, () => set(v)), { step })));
+
+    switch (c.type) {
+      case 'NodeFixed':
+        this.host.append(this.refRow('Node', 'node', c.node, setNode('node')));
+        this.host.append(row('Fix X', checkbox(c.xFixed, (v) => this.editCond(id, () => { c.xFixed = v; }))));
+        numField('X value', c.xFixValue, (v) => { c.xFixValue = v; });
+        this.host.append(row('Fix Y', checkbox(c.yFixed, (v) => this.editCond(id, () => { c.yFixed = v; }))));
+        numField('Y value', c.yFixValue, (v) => { c.yFixValue = v; });
+        break;
+      case 'NodeOnEdge':
+      case 'NodeOnCorner':
+      case 'NodeSymmetric':
+        this.host.append(this.refRow('Node', 'node', c.node, setNode('node')));
+        break;
+      case 'NodesPaired':
+      case 'PathActive':
+        this.host.append(this.refRow('Node 1', 'node', c.node1, setNode('node1')));
+        this.host.append(this.refRow('Node 2', 'node', c.node2, setNode('node2')));
+        break;
+      case 'PathAngleFixed':
+        this.host.append(this.refRow('Node 1', 'node', c.node1, setNode('node1')));
+        this.host.append(this.refRow('Node 2', 'node', c.node2, setNode('node2')));
+        numField('Angle°', c.angle, (v) => { c.angle = v; }, 5);
+        break;
+      case 'PathAngleQuant':
+        this.host.append(this.refRow('Node 1', 'node', c.node1, setNode('node1')));
+        this.host.append(this.refRow('Node 2', 'node', c.node2, setNode('node2')));
+        numField('Quant N', c.quant, (v) => { c.quant = Math.max(1, Math.trunc(v)); }, 1);
+        numField('Offset°', c.quantOffset, (v) => { c.quantOffset = v; }, 5);
+        break;
+      case 'NodesCollinear':
+        this.host.append(this.refRow('Node 1', 'node', c.node1, setNode('node1')));
+        this.host.append(this.refRow('Node 2', 'node', c.node2, setNode('node2')));
+        this.host.append(this.refRow('Node 3', 'node', c.node3, setNode('node3')));
+        break;
+      case 'EdgeLengthFixed':
+        this.host.append(this.refRow('Edge', 'edge', c.edge, setEdge('edge')));
+        break;
+      case 'EdgesSameStrain':
+        this.host.append(this.refRow('Edge 1', 'edge', c.edge1, setEdge('edge1')));
+        this.host.append(this.refRow('Edge 2', 'edge', c.edge2, setEdge('edge2')));
+        break;
+    }
+
     const feas = this.tree.conditionFeasible(c);
-    this.host.append(
-      row('Type', readonlyField(c.type)),
-      row('Tag', readonlyField(c.tag)),
-      row('Feasible', readonlyField(feas === undefined ? '—' : feas ? 'yes' : 'no')),
-    );
+    this.host.append(row('Feasible', readonlyField(feas === undefined ? '—' : feas ? 'yes' : 'no')));
     this.host.append(buttonGroup([
       actionButton('Remove', () => this.apply('Remove condition', () => this.tree.removeCondition(id))),
     ]));

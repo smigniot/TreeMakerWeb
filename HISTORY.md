@@ -5,6 +5,27 @@ Newest entry first.
 
 ---
 
+## Session 16 — Editable conditions + symmetry ±45° buttons
+
+**Conditions are now editable** (not just add/remove). 59 unit + 12 e2e green.
+
+- `Tree.updateCondition(id, mutate)` edits a condition in place (edit scope +
+  cleanup, so feasibility re-derives).
+- Inspector condition panel is now editable: every node/edge **reference is an id
+  input** plus a **"◎ pick" target button** that enters canvas pick mode — the
+  next click on a matching part sets the reference. Scalar fields (fix flags +
+  values, angle, quant, offset) are editable too.
+- `DesignView.beginPick(kind, onPick)` / `cancelPick()`: pick mode consumes the
+  next matching-part click (no selection / add-node); crosshair cursor.
+- Tree-panel condition list entries are now clickable → select the condition →
+  opens its editor (easier than hunting the canvas marker).
+- **Symmetry +45° / −45°** buttons added to the Tree panel.
+- e2e: edit a condition's node id (input + pick); rotate symmetry ±45°.
+  (Note: Playwright `getByRole(name:'+45°')` doesn't match that accessible name —
+  tests use a `hasText` locator.)
+
+---
+
 ## Session 15 — Fix: writeV4 dropped 5 condition types (Scale Everything ignored them)
 
 **Found while verifying the new condition UI end-to-end.** `writeV4` (the

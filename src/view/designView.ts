@@ -35,6 +35,7 @@ export class DesignView {
   private layers: Record<'paper' | 'creases' | 'paths' | 'edges' | 'nodes' | 'conditions' | 'labels', SVGGElement>;
   private xf: ViewTransform;
   private drag: DragState | null = null;
+  private pick: { kind: PartRef['kind']; onPick: (id: number) => void } | null = null;
   private disposers: Array<() => void> = [];
 
   /** Called once per discrete user edit (add/move/delete) — an undo boundary. */
@@ -250,10 +251,29 @@ export class DesignView {
     return this.xf.toPaper(e.clientX - r.left, e.clientY - r.top);
   }
 
+  /** Enter "pick a part" mode: the next click on a matching part calls onPick
+   * (and does not change the selection). Used by the inspector's target buttons. */
+  beginPick(kind: PartRef['kind'], onPick: (id: number) => void): void {
+    this.pick = { kind, onPick };
+    this.svg.style.cursor = 'crosshair';
+  }
+
+  cancelPick(): void {
+    this.pick = null;
+    this.svg.style.cursor = '';
+  }
+
   private onPointerDown(e: PointerEvent): void {
     this.svg.focus();
     const hit = partFromEvent(e);
     const paper = this.pointerPaper(e);
+
+    if (this.pick) {
+      const want = this.pick;
+      this.cancelPick();
+      if (hit && hit.kind === want.kind) want.onPick(hit.id);
+      return; // pick mode consumes the click (no selection / add-node)
+    }
 
     if (hit) {
       const ref: PartRef = { kind: hit.kind as PartRef['kind'], id: hit.id };

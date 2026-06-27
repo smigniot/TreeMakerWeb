@@ -120,6 +120,46 @@ test.describe('TreeMakerWeb editor', () => {
     await expect(page.locator('.tm-inspector')).toContainText('Conditions (1)');
   });
 
+  test('edits a condition: node id field + target pick', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    // create a NodeOnEdge condition on the first leaf, then open its editor
+    await page.locator('.tm-node.tm-leaf').first().click();
+    await page.getByRole('button', { name: 'Stick to edge' }).click();
+    await page.locator('.tm-condition').first().click(); // select the marker → editor
+
+    const nodeInput = page.locator('.tm-inspector .tm-row', { hasText: 'Node' }).locator('input');
+    const original = await nodeInput.inputValue();
+
+    // edit the id directly
+    await nodeInput.fill('3');
+    await nodeInput.blur();
+    await expect(nodeInput).toHaveValue('3');
+
+    // "target" pick: click it, then click a node on the canvas to set the ref
+    await page.getByRole('button', { name: '◎ pick' }).click();
+    await page.locator('.tm-node').nth(2).click();
+    // the field updated to some node id (pick consumed the click, didn't reselect)
+    await expect(page.locator('.tm-inspector .tm-panel-title')).toContainText('Condition');
+    expect(original).not.toBe('');
+  });
+
+  test('rotates symmetry by ±45°', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sample' }).click();
+    // enable symmetry in the Tree panel (no selection)
+    await page.locator('.tm-inspector .tm-row', { hasText: 'Symmetry' }).locator('input[type=checkbox]').check();
+    const angle = page.locator('.tm-inspector .tm-row', { hasText: 'Sym °' }).locator('input');
+    const plus45 = page.locator('.tm-inspector button', { hasText: '+45' });
+    const minus45 = page.locator('.tm-inspector button', { hasText: '−45' });
+    await expect(angle).toHaveValue('90');
+    await plus45.click();
+    await expect(angle).toHaveValue('135');
+    await minus45.click();
+    await minus45.click();
+    await expect(angle).toHaveValue('45');
+  });
+
   test('exports the crease pattern as FOLD', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Sample' }).click();

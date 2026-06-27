@@ -258,6 +258,14 @@ export class Tree {
     });
   }
 
+  /** Edit a condition in place (e.g. change a referenced node/edge or a value). */
+  updateCondition(id: ConditionId, mutate: (c: Condition) => void): void {
+    this.edit(() => {
+      const c = this.conditions.get(id);
+      if (c) { mutate(c); this.touch(); }
+    });
+  }
+
   // ---------------------------------------------------------------- accessors
   getNode(id: NodeId): TreeNode | undefined { return this.nodes.get(id); }
   getEdge(id: EdgeId): Edge | undefined { return this.edges.get(id); }
